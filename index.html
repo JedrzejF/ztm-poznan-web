@@ -3,19 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZTM Poznań — rozkład a pomiar</title>
-<style>
-  :root { --tlo:#fcfcfb; --tekst:#0b0b0b; --tekst2:#52514e; }
-  @media (prefers-color-scheme: dark) { :root { --tlo:#1a1a19; --tekst:#fff; --tekst2:#c3c2b7; } }
-  body { margin:0; padding:48px 16px; background:var(--tlo); color:var(--tekst);
-         font:16px/1.5 system-ui, sans-serif; }
-  main { max-width:640px; margin:0 auto; }
-  p { color:var(--tekst2); }
-</style>
+<title>Korki na odcinkach</title>
+<meta name="description" content="Które odcinki komunikacji miejskiej w Poznaniu wydłużają się o danej porze dnia — pomiar z GTFS-RT.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styl.css">
 </head>
-<body><main>
-<h1>ZTM Poznań — rozkład a pomiar</h1>
-<p>Strona w budowie. Pierwszy widok: wykres Mareya (czas × odległość wzdłuż trasy)
-porównujący rozkład jazdy z trajektoriami pojazdów zmierzonymi z GTFS-RT.</p>
-</main></body>
+<body>
+<header>
+  <h1>Korki na odcinkach</h1>
+  <p class="podtytul">O ile dłużej niż zwykle jedzie się między przystankami o danej godzinie — dni robocze, pomiar z GTFS-RT ZTM Poznań.</p>
+</header>
+
+<section class="sterowanie" aria-label="Filtry">
+  <label class="suwak">
+    <span>Godzina <output id="godz-etykieta">15:00–15:59</output></span>
+    <input id="godz" type="range" min="4" max="23" step="1" value="15">
+  </label>
+  <fieldset>
+    <legend>Pojazdy</legend>
+    <label><input type="radio" name="typ" value="wszystkie" checked> wszystkie</label>
+    <label><input type="radio" name="typ" value="0"> tramwaje</label>
+    <label><input type="radio" name="typ" value="3"> autobusy</label>
+  </fieldset>
+  <fieldset>
+    <legend>Miara</legend>
+    <label><input type="radio" name="tryb" value="iloraz" checked> względem doby (×)</label>
+    <label><input type="radio" name="tryb" value="roznica"> różnica [s]</label>
+  </fieldset>
+</section>
+
+<div class="legenda" aria-hidden="true">
+  <span id="leg-lewa">÷1,5 szybciej</span>
+  <span class="pasek" id="leg-pasek"></span>
+  <span id="leg-prawa">×1,5 wolniej</span>
+  <span class="brak"><i></i> za mało przejazdów</span>
+</div>
+
+<main>
+  <div id="mapa" role="region" aria-label="Mapa odcinków"></div>
+  <aside id="panel">
+    <h2 id="panel-tytul">Kliknij odcinek na mapie</h2>
+    <p id="panel-opis" class="drobny">Profil dobowy: mediana czasu przejazdu w każdej godzinie, linia przerywana — mediana całej doby.</p>
+    <svg id="profil" viewBox="0 0 320 160" role="img" aria-label="Profil dobowy odcinka"></svg>
+  </aside>
+</main>
+
+<section class="tabela">
+  <h2>Najbardziej wydłużone odcinki — <span id="tab-godz">15:00–15:59</span></h2>
+  <table>
+    <thead><tr><th>Odcinek</th><th>Pojazd</th><th class="l">W tej godzinie</th><th class="l">Cała doba</th><th class="l">Zmiana</th><th class="l">Przejazdów</th></tr></thead>
+    <tbody id="tab"></tbody>
+  </table>
+</section>
+
+<footer>
+  <p id="meta" class="drobny"></p>
+  <p class="drobny">Kolor: mediana zmierzonego czasu przejazdu w wybranej godzinie wobec mediany całodobowej tego samego odcinka i kierunku. Godziny z mniej niż <span id="min-n">10</span> przejazdami pominięte. Czas odcinka obejmuje postój na przystanku początkowym. Źródło: ZTM Poznań (GTFS, GTFS-RT), pomiar własny. Podkład: © Esri, OpenStreetMap.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js"></script>
+<script src="logika.js"></script>
+<script src="mapa.js"></script>
+</body>
 </html>
