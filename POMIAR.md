@@ -109,6 +109,34 @@ wpisz początek nazwy i wybierz słupek z kierunkiem („Fredry → Gwarna [117]
   zaleta), oznaczane w analizie osobno; wpływ świateł i kolejek w szczycie —
   tylko dni robocze.
 
+## Tryb „Jadę pojazdem” — liczenie pasażerów w trakcie jazdy
+
+Do wyrywkowego liczenia na pojedynczych przejazdach, bez planu próby —
+kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
+**Jadę pojazdem** u góry notatnika; tryb „Na przystanku” działa bez zmian.
+
+1. **Zacznij przejazd** → linia, numer taborowy (w środku: naklejka nad
+   drzwiami albo przy kabinie), kierunek (przyciski „→ cel” z rozkładu).
+2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
+   notatnik sam przechodzi na kolejny. Objazd → pole „inny”, wyszukiwarka.
+3. **Liczone**: moje drzwi / mój człon (wagon) / cały pojazd — raz na
+   przejazd, zawsze to samo. Bez tego liczby są bezużyteczne.
+4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej,
+   potem **zapełnienie po odjeździe** (luźno / siedzenia zajęte / stoją / ścisk).
+5. Pojazd rusza → **Odjazd ▶**. Zapisuje postój z czasem telefonu, liczniki
+   od zera, przystanek przechodzi na następny.
+6. Przystanek na żądanie, pojazd nie stanął → **Nie stanął** (przejście
+   dalej bez zapisu). Pomyłka → **Cofnij odjazd** (postój wraca do edycji).
+7. Wysiadasz → **Zakończ przejazd**.
+
+Czas „Odjazd” + numer taborowy wystarczą do dopasowania z GPS, więc źle
+wybrany przystanek da się naprawić w analizie. Eksport daje drugi plik,
+`przejazdy_*.csv` — wiersz na postój: `id, linia, pojazd, kierunek, cel,
+zakres, lp, przystanek, t_odjazd, wsiadlo, wysiadlo, tlok, uwagi`
+(`t_odjazd` w ms od epoki, UTC). Trasy w notatniku to wariant główny kierunku z aktualnego
+rozkładu (ten sam co w tabeli punktualności); kursy skrócone kończą się
+wcześniej — wtedy po prostu **Zakończ**.
+
 ## Numer taborowy — obowiązkowo
 
 Na boku i z przodu pojazdu: **3 cyfry tramwaj, 4 cyfry autobus**. To klucz do

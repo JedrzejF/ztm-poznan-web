@@ -43,7 +43,9 @@
 
   // Wymiana pasazerska (27.09, prosba autora): liczniki dla OBSERWOWANYCH
   // drzwi (jedna osoba nie policzy 4 drzwi tramwaju) i zapelnienie w 3 klasach.
-  var TLOK = [["luzno", "lu\u017ano"], ["siedzenia", "siedzenia zaj\u0119te"], ["stoja", "stoj\u0105"]];
+  // "scisk" (27.09): z wnetrza pojazdu widac tez tlok, ktorego z peronu nie ocenisz.
+  var TLOK = [["luzno", "lu\u017ano"], ["siedzenia", "siedzenia zaj\u0119te"], ["stoja", "stoj\u0105"],
+              ["scisk", "\u015bcisk"]];
 
   /* Licznik +1 / -1; nigdy ponizej zera. */
   function zlicz(obs, pole, delta) {
@@ -147,6 +149,80 @@
     return wyniki.slice(0, ile || 12).map(function (x) { return x[1]; });
   }
 
+  /* ---- Tryb "jade pojazdem" (27.09): wyrywkowe liczenie pasazerow na
+     pojedynczych przejazdach. Jeden przejazd = jeden pojazd, ciag postojow.
+     Przystanek biezacy podpowiada trasa linii (wariant glowny kierunku,
+     opoznienia.trasy); moment "Odjazd" zapisuje postoj z czasem telefonu -
+     z numerem taborowym wystarcza do dopasowania z GPS, nawet gdy przystanek
+     wybrano zle. Zapelnienie dotyczy odcinka PO odjezdzie z przystanku. */
+  var ZAKRES = [["", "\u2014"], ["drzwi", "moje drzwi"], ["czlon", "m\u00f3j cz\u0142on / wagon"],
+                ["caly", "ca\u0142y pojazd"]];
+
+  function nowyPrzejazd(teraz) {
+    licznik += 1;
+    return { id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
+             zakres: "", uwagi: "", postoje: [], utworzona: teraz,
+             biezacy: { przystanek: "", wsiadlo: 0, wysiadlo: 0, tlok: "" } };
+  }
+
+  function _pusty(przystanek) { return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "" }; }
+
+  /* Wybor kierunku: trasa = lista stop_id; biezacy = pierwszy przystanek,
+     chyba ze biezacy juz lezy na tej trasie (zmiana kierunku w trakcie). */
+  function ustawTrase(prz, kierunek, cel, trasa) {
+    var b = Object.assign({}, prz.biezacy);
+    if (trasa.indexOf(b.przystanek) < 0) b.przystanek = trasa[0] || "";
+    return Object.assign({}, prz, { kierunek: kierunek, cel: cel, trasa: trasa.slice(), biezacy: b });
+  }
+
+  function ustawPrzystanek(prz, id) {
+    return Object.assign({}, prz, { biezacy: Object.assign({}, prz.biezacy, { przystanek: id }) });
+  }
+
+  function zliczPrzejazd(prz, pole, delta) {
+    return Object.assign({}, prz, { biezacy: zlicz(prz.biezacy, pole, delta) });
+  }
+
+  /* Nastepny przystanek na trasie po `id`; "" gdy koniec trasy albo `id`
+     poza trasa (objazd, wpis reczny) - wtedy wybiera sie recznie. */
+  function nastepny(trasa, id) {
+    var i = trasa.indexOf(id);
+    return i >= 0 && i + 1 < trasa.length ? trasa[i + 1] : "";
+  }
+
+  /* Odjazd z biezacego przystanku: postoj zapisany z czasem t, biezacy
+     przesuwa sie na nastepny przystanek trasy. */
+  function odjazd(prz, t) {
+    if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
+    var ost = prz.postoje[prz.postoje.length - 1];
+    if (ost && ost.t > t) throw new Error("czas wcze\u015bniejszy ni\u017c poprzedni odjazd");
+    var p = Object.assign({}, prz.biezacy, { t: t });
+    return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
+                                    biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
+  }
+
+  /* Przystanek bez zatrzymania (na zadanie) - przesuniecie bez zapisu. */
+  function pomin(prz) {
+    return ustawPrzystanek(prz, nastepny(prz.trasa, prz.biezacy.przystanek));
+  }
+
+  /* Cofniecie ostatniego odjazdu: postoj wraca do edycji z licznikami. */
+  function cofnijOdjazd(prz) {
+    if (!prz.postoje.length) return prz;
+    var p = Object.assign({}, prz.postoje[prz.postoje.length - 1]); delete p.t;
+    return Object.assign({}, prz, { postoje: prz.postoje.slice(0, -1), biezacy: p });
+  }
+
+  function brakiPrzejazdu(prz) {
+    var b = [];
+    if (!prz.linia) b.push("linia");
+    if (!/^\d{3,4}$/.test(prz.pojazd)) b.push("numer taborowy (3\u20134 cyfry)");
+    if (!prz.postoje.length) b.push("\u017caden odjazd");
+    var liczono = prz.postoje.some(function (p) { return p.wsiadlo || p.wysiadlo; });
+    if (liczono && !prz.zakres) b.push("zakres liczenia");
+    return b;
+  }
+
   function csvPole(v) {
     var s = v === undefined || v === null ? "" : String(v);
     return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -169,7 +245,26 @@
     return w.join("\n") + "\n";
   }
 
-  return { ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
+  var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
+                           "t_odjazd", "wsiadlo", "wysiadlo", "tlok", "uwagi"];
+
+  /* CSV przejazdow: wiersz = postoj (format dlugi), czas odjazdu w ms od epoki. */
+  function csvPrzejazdy(lista) {
+    var w = [KOLUMNY_PRZEJAZDU.join(",")];
+    lista.forEach(function (j) {
+      j.postoje.forEach(function (p, k) {
+        w.push([j.id, j.linia, j.pojazd, j.kierunek, j.cel, j.zakres, k + 1, p.przystanek, p.t,
+                p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", j.uwagi].map(csvPole).join(","));
+      });
+    });
+    return w.join("\n") + "\n";
+  }
+
+  return { ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
+           ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
+           nastepny: nastepny, odjazd: odjazd, pomin: pomin, cofnijOdjazd: cofnijOdjazd,
+           brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,
+           ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
            etykietaPrzystanku: etykietaPrzystanku, idZTekstu: idZTekstu,
            normuj: normuj, szukajPrzystankow: szukajPrzystankow,
            nowa: nowa, zapisz: zapisz, cofnij: cofnij, zlicz: zlicz, braki: braki,

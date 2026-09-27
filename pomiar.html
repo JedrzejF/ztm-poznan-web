@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Pomiar postoju</title>
+<title>Pomiar terenowy</title>
 <meta name="description" content="Notatnik pomiaru terenowego: momenty zatrzymania, drzwi i ruszenia pojazdów na przystanku.">
 <link rel="stylesheet" href="styl.css?v=0e48dbc602">
 <style>
@@ -65,14 +65,37 @@
   .tlok button { flex: 1; min-height: 40px; font-size: 12px; border-radius: 8px; border: 1px solid var(--linia);
                  background: var(--tlo); color: var(--tekst); }
   .tlok button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  .tryby { display: flex; gap: 6px; max-width: 720px; margin: 8px auto 0; }
+  .tryby button { flex: 1; min-height: 44px; font: 600 15px system-ui, sans-serif; border-radius: 10px;
+                  border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
+  .tryby button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  [hidden] { display: none !important; }
+  #jazda { max-width: 720px; margin: 12px auto; }
+  .biezacy .szukaj { flex: none; }
+  .pasazerowie { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .licznik { min-width: 0; padding-left: 8px; gap: 4px; }
+  .licznik span { min-width: 0; font-size: 13px; }
+  .glowny-duzy { width: 100%; min-height: 64px; font: 600 18px system-ui, sans-serif; border-radius: 12px;
+                 border: 0; background: var(--akcent); color: #fff; }
+  .kierunki { margin-bottom: 10px; flex-wrap: wrap; } .kierunki button { min-height: 44px; font-size: 14px; }
+  .biezacy { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .biezacy select { font: 600 18px system-ui, sans-serif; padding: 10px; border-radius: 8px; width: 100%;
+                    border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
+  .biezacy input { font: 15px system-ui, sans-serif; padding: 8px; border-radius: 8px; border: 1px solid var(--linia);
+                   background: var(--tlo); color: var(--tekst); }
+  #jazda details input { width: 100%; }
   .lista .wiersz { font-size: 14px; display: flex; justify-content: space-between; gap: 8px;
                    border-bottom: 1px solid var(--linia); padding: 6px 0; }
 </style>
 </head>
 <body>
 <header style="max-width:720px;margin:0 auto">
-  <h1 style="font-size:20px;margin:12px 0 2px">Pomiar postoju</h1>
+  <h1 style="font-size:20px;margin:12px 0 2px">Pomiar terenowy</h1>
   <p class="drobny">Instrukcja: <a href="https://github.com/JedrzejF/ztm-poznan-web/blob/main/POMIAR.md">POMIAR.md</a>. Czas z zegara telefonu — musi być ustawiany automatycznie.</p>
+  <div class="tryby" role="tablist">
+    <button type="button" data-tryb="postoj">Na przystanku</button>
+    <button type="button" data-tryb="jazda">Jadę pojazdem</button>
+  </div>
 </header>
 <div class="pasek-gora">
   <span class="zegar" id="zegar">--:--:--</span>
@@ -85,6 +108,7 @@
 
 <section class="karty" id="karty" aria-live="polite"></section>
 <section class="lista" id="lista"></section>
+<section id="jazda" hidden></section>
 
 <div class="dol">
   <button class="glowny" id="nowy" type="button">+ Pojazd</button>
@@ -92,7 +116,7 @@
   <button id="wyczysc" type="button">Wyczyść</button>
 </div>
 
-<script src="pomiar-logika.js?v=4698c4de2e"></script>
-<script src="pomiar.js?v=2789f26ca3"></script>
+<script src="pomiar-logika.js?v=2ac71594f5"></script>
+<script src="pomiar.js?v=a347c7f81d"></script>
 </body>
 </html>
