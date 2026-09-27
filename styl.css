@@ -79,3 +79,13 @@ footer { margin-top: 20px; border-top: 1px solid var(--linia); padding-top: 12px
   main { grid-template-columns: 1fr; }
   #mapa { height: 55vh; }
 }
+
+.filtry { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: end; margin: 8px 0 12px; }
+.filtry label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--tekst-2); }
+.filtry input, .filtry select, .filtry button {
+  font: inherit; font-size: 14px; color: var(--tekst); background: var(--tlo);
+  border: 1px solid var(--linia); border-radius: 6px; padding: 6px 8px; min-width: 200px; }
+.filtry button { min-width: 0; cursor: pointer; }
+.slupek { display: flex; height: 10px; width: 160px; border-radius: 3px; overflow: hidden; gap: 2px; }
+.slupek i { display: block; height: 100%; }
+tr.suma td { font-weight: 600; }

@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Korki na odcinkach</title>
+<title>Korki i opóźnienia</title>
 <meta name="description" content="Które odcinki komunikacji miejskiej w Poznaniu wydłużają się o danej porze dnia — pomiar z GTFS-RT.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="styl.css">
 </head>
 <body>
 <header>
-  <h1>Korki na odcinkach</h1>
-  <p class="podtytul">O ile dłużej niż zwykle jedzie się między przystankami o danej godzinie — dni robocze, pomiar z GTFS-RT ZTM Poznań.</p>
+  <h1>Korki i opóźnienia</h1>
+  <p class="podtytul">Gdzie i o której komunikacja miejska w Poznaniu jedzie wolniej niż zwykle i jak bardzo odstaje od rozkładu — dni robocze, pomiar z GTFS-RT ZTM Poznań.</p>
 </header>
 
 <section class="sterowanie" aria-label="Filtry">
@@ -27,8 +27,10 @@
   </fieldset>
   <fieldset>
     <legend>Miara</legend>
-    <label><input type="radio" name="tryb" value="iloraz" checked> względem doby (×)</label>
-    <label><input type="radio" name="tryb" value="roznica"> różnica [s]</label>
+    <label><input type="radio" name="tryb" value="iloraz" checked> korek (× doby)</label>
+    <label><input type="radio" name="tryb" value="roznica"> korek [s]</label>
+    <label><input type="radio" name="tryb" value="opoznienie"> opóźnienie</label>
+    <label><input type="radio" name="tryb" value="punktualnosc"> punktualność</label>
   </fieldset>
 </section>
 
@@ -49,16 +51,32 @@
 </main>
 
 <section class="tabela">
-  <h2>Najbardziej wydłużone odcinki — <span id="tab-godz">15:00–15:59</span></h2>
+  <h2><span id="tab-tytul">Najbardziej wydłużone odcinki</span> — <span id="tab-godz">15:00–15:59</span></h2>
   <table>
-    <thead><tr><th>Odcinek</th><th>Pojazd</th><th class="l">W tej godzinie</th><th class="l">Cała doba</th><th class="l">Zmiana</th><th class="l">Przejazdów</th></tr></thead>
+    <thead id="tab-glowa"></thead>
     <tbody id="tab"></tbody>
   </table>
 </section>
 
+<section class="tabela" id="punktualnosc">
+  <h2>Punktualność przyjazdów</h2>
+  <p class="drobny">Przyjazd punktualny: od <span id="p-przed">1 min</span> przed do <span id="p-po">3 min</span> po czasie z rozkładu. Wszystkie godziny dni roboczych. Przystanek = wszystkie słupki o tej nazwie.</p>
+  <div class="filtry">
+    <label>Przystanek <input id="p-przystanek" list="p-lista" placeholder="wszystkie" autocomplete="off"></label>
+    <datalist id="p-lista"></datalist>
+    <label>Linia <select id="p-linia"><option value="">wszystkie</option></select></label>
+    <button id="p-wyczysc" type="button">Wyczyść</button>
+  </div>
+  <table>
+    <thead><tr><th id="p-kol">Linia</th><th>Rozkład przyjazdów</th><th class="l">Punktualnie</th><th class="l">Przed czasem</th><th class="l">Opóźnione</th><th class="l">Mediana</th><th class="l">90% przyjazdów do</th><th class="l">Przyjazdów</th></tr></thead>
+    <tbody id="p-tab"></tbody>
+  </table>
+  <p class="drobny" id="p-info"></p>
+</section>
+
 <footer>
   <p id="meta" class="drobny"></p>
-  <p class="drobny">Kolor: mediana zmierzonego czasu przejazdu w wybranej godzinie wobec mediany całodobowej tego samego odcinka i kierunku. Godziny z mniej niż <span id="min-n">10</span> przejazdami pominięte. Czas odcinka obejmuje postój na przystanku początkowym. Źródło: ZTM Poznań (GTFS, GTFS-RT), pomiar własny. Podkład: © Esri, OpenStreetMap.</p>
+  <p class="drobny"><b>Korek:</b> mediana zmierzonego czasu przejazdu w wybranej godzinie wobec mediany całodobowej tego samego odcinka i kierunku; czas odcinka obejmuje postój na przystanku początkowym, więc na przystankach regulacyjnych wydłużenie może być postojem wyrównawczym. <b>Opóźnienie i punktualność:</b> przy przyjeździe na przystanek końcowy odcinka, wobec rozkładu; godzina = godzina planowego przyjazdu. Pierwszego przystanku kursu nie da się zmierzyć. Komórki z mniej niż <span id="min-n">10</span> przejazdami pominięte. Źródło: ZTM Poznań (GTFS, GTFS-RT), pomiar własny. Podkład: © Esri, OpenStreetMap.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
