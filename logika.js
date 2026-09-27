@@ -134,30 +134,68 @@
       + fmtRoznica(c[1] - odc.d[1]) + ")\nprzejazdów: " + c[0];
   }
 
-  /* Tabela punktualnosci. Wiersze gotowe z web/opoznienia.punktualnosc:
-     {p: przystanek|"*", l: linia|"*", n, przed, punkt, po, med, p90}.
-     - przystanek i linia: jeden wiersz
-     - tylko przystanek: linie na przystanku + suma "*"
-     - tylko linia: przystanki linii (bez "*") - najgorsze na gorze
-     - nic: linie w calej sieci (p = "*") */
-  function filtrPunkt(wiersze, przystanek, linia) {
-    var w;
-    if (przystanek && linia) w = wiersze.filter(function (r) { return r.p === przystanek && r.l === linia; });
-    else if (przystanek) w = wiersze.filter(function (r) { return r.p === przystanek; });
-    else if (linia) w = wiersze.filter(function (r) { return r.l === linia && r.p !== "*"; });
-    else w = wiersze.filter(function (r) { return r.p === "*"; });
-    return w.slice().sort(function (a, b) {
-      if (a.l === "*" && b.l !== "*") return -1;      // suma przystanku na gorze
-      if (b.l === "*" && a.l !== "*") return 1;
-      return a.punkt / a.n - b.punkt / b.n;           // najgorsze pierwsze
+  /* Tabela punktualnosci (23.09: kierunek, kolejnosc na trasie, zjazdy osobno).
+     d = {wiersze, trasy} z web/opoznienia.py:
+       wiersze: {s: stop_id|"*", p: nazwa|"*", l: linia|"*", k: kierunek, n, przed, punkt, po, med, p90}
+       trasy:   {linia: {kierunek: {cel, przystanki: [stop_id...]}}} - wariant glowny
+     Zwraca {glowne, inne}: glowne - na glownej trasie (w jej kolejnosci),
+     inne - zjazdy, objazdy, kursy skrocone (malejaco wg liczby przyjazdow).
+       - linia (+ kierunek): przystanki linii w kolejnosci trasy
+       - przystanek: suma "*" + linie w kierunkach; linia na tym przystanku
+         poza swoja glowna trasa -> inne
+       - nic: linie x kierunki w calej sieci, najgorsze na gorze */
+  function naTrasie(d, r) {
+    var t = d.trasy[r.l] && d.trasy[r.l][r.k];
+    return t ? t.przystanki.indexOf(r.s) : -1;
+  }
+  function udzial(r) { return r.punkt / r.n; }
+
+  function filtrPunkt(d, przystanek, linia, kierunek) {
+    var w = d.wiersze, glowne, inne;
+    if (linia && !przystanek) {
+      var k = kierunek || Object.keys(d.trasy[linia] || {})[0];
+      var wl = w.filter(function (r) { return r.l === linia && r.k === k && r.s !== "*"; });
+      glowne = wl.filter(function (r) { return naTrasie(d, r) >= 0; })
+                 .sort(function (a, b) { return naTrasie(d, a) - naTrasie(d, b); });
+      inne = wl.filter(function (r) { return naTrasie(d, r) < 0; })
+               .sort(function (a, b) { return b.n - a.n; });
+      var suma = w.filter(function (r) { return r.s === "*" && r.p === "*" && r.l === linia && r.k === k; });
+      return { glowne: suma.concat(glowne), inne: inne };
+    }
+    if (przystanek) {
+      var wp = w.filter(function (r) {
+        return r.p === przystanek && (!linia || r.l === linia);
+      });
+      var sumy = linia ? [] : wp.filter(function (r) { return r.s === "*"; });
+      var reszta = wp.filter(function (r) { return r.s !== "*"; });
+      var porz = function (a, b) {
+        return a.l.localeCompare(b.l, "pl", { numeric: true }) || a.k.localeCompare(b.k);
+      };
+      return { glowne: sumy.concat(reszta.filter(function (r) { return naTrasie(d, r) >= 0; }).sort(porz)),
+               inne: reszta.filter(function (r) { return naTrasie(d, r) < 0; }).sort(porz) };
+    }
+    return { glowne: w.filter(function (r) { return r.s === "*" && r.p === "*"; })
+                      .sort(function (a, b) { return udzial(a) - udzial(b); }),
+             inne: [] };
+  }
+
+  /* Etykiety peronow: ta sama nazwa drugi raz na trasie -> "peron 2". */
+  function etykietyPeronow(d, linia, k, nazwy) {
+    var t = d.trasy[linia] && d.trasy[linia][k], licz = {}, wynik = {};
+    if (!t) return wynik;
+    t.przystanki.forEach(function (s) {
+      var n = nazwy[s] || s;
+      licz[n] = (licz[n] || 0) + 1;
+      wynik[s] = licz[n] > 1 ? n + " (peron " + licz[n] + ")" : n;
     });
+    return wynik;
   }
 
   return {
     TRYBY: TRYBY, NASYCENIE: NASYCENIE, MOTYWY: MOTYWY, TYPY: TYPY,
     pozycja: pozycja, kolor: kolor, komorka: komorka, wartosc: wartosc,
     pasujeTyp: pasujeTyp, ranking: ranking, nazwa: nazwa, opis: opis,
-    filtrPunkt: filtrPunkt, fmtIloraz: fmtIloraz, fmtRoznica: fmtRoznica,
+    filtrPunkt: filtrPunkt, etykietyPeronow: etykietyPeronow, fmtIloraz: fmtIloraz, fmtRoznica: fmtRoznica,
     fmtOpozn: fmtOpozn, fmtProc: fmtProc, fmtGodz: fmtGodz, fmtWartosc: fmtWartosc
   };
 }));

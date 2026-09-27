@@ -6,7 +6,7 @@
 <title>Korki i opóźnienia</title>
 <meta name="description" content="Które odcinki komunikacji miejskiej w Poznaniu wydłużają się o danej porze dnia — pomiar z GTFS-RT.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styl.css">
+<link rel="stylesheet" href="styl.css?v=0e48dbc602">
 </head>
 <body>
 <header>
@@ -60,28 +60,35 @@
 
 <section class="tabela" id="punktualnosc">
   <h2>Punktualność przyjazdów</h2>
-  <p class="drobny">Przyjazd punktualny: od <span id="p-przed">1 min</span> przed do <span id="p-po">3 min</span> po czasie z rozkładu. Wszystkie godziny dni roboczych. Przystanek = wszystkie słupki o tej nazwie.</p>
+  <p class="drobny">Przyjazd punktualny: od <span id="p-przed">1 min</span> przed do <span id="p-po">3 min</span> po czasie z rozkładu. Wszystkie godziny dni roboczych. Po wybraniu linii — przystanki w kolejności trasy, osobno dla każdego kierunku.</p>
   <div class="filtry">
     <label>Przystanek <input id="p-przystanek" list="p-lista" placeholder="wszystkie" autocomplete="off"></label>
     <datalist id="p-lista"></datalist>
     <label>Linia <select id="p-linia"><option value="">wszystkie</option></select></label>
+    <label id="p-kier-etyk" hidden>Kierunek <select id="p-kierunek"></select></label>
     <button id="p-wyczysc" type="button">Wyczyść</button>
   </div>
   <table>
     <thead><tr><th id="p-kol">Linia</th><th>Rozkład przyjazdów</th><th class="l">Punktualnie</th><th class="l">Przed czasem</th><th class="l">Opóźnione</th><th class="l">Mediana</th><th class="l">90% przyjazdów do</th><th class="l">Przyjazdów</th></tr></thead>
     <tbody id="p-tab"></tbody>
   </table>
+  <details id="p-inne-blok" hidden>
+    <summary id="p-inne-tytul">Poza główną trasą</summary>
+    <p class="drobny">Zjazdy do zajezdni, kursy skrócone i objazdy — przystanki spoza wariantu, którym jeździ większość kursów linii w tym kierunku.</p>
+    <table><tbody id="p-inne"></tbody></table>
+  </details>
   <p class="drobny" id="p-info"></p>
 </section>
 
 <footer>
   <p id="meta" class="drobny"></p>
-  <p class="drobny"><b>Korek:</b> mediana zmierzonego czasu przejazdu w wybranej godzinie wobec mediany całodobowej tego samego odcinka i kierunku; czas odcinka obejmuje postój na przystanku początkowym, więc na przystankach regulacyjnych wydłużenie może być postojem wyrównawczym. <b>Opóźnienie i punktualność:</b> przy przyjeździe na przystanek końcowy odcinka, wobec rozkładu; godzina = godzina planowego przyjazdu. Pierwszego przystanku kursu nie da się zmierzyć. Komórki z mniej niż <span id="min-n">10</span> przejazdami pominięte. Źródło: ZTM Poznań (GTFS, GTFS-RT), pomiar własny. Podkład: © Esri, OpenStreetMap.</p>
+  <p class="drobny"><a href="pomiar.html">Notatnik pomiaru terenowego</a> · <a href="https://github.com/JedrzejF/ztm-poznan-web/blob/main/POMIAR.md">instrukcja</a></p>
+  <p class="drobny"><b>Korek:</b> mediana zmierzonego czasu przejazdu w wybranej godzinie wobec mediany całodobowej tego samego odcinka i kierunku; czas odcinka obejmuje postój na przystanku początkowym, więc na przystankach regulacyjnych wydłużenie może być postojem wyrównawczym. <b>Opóźnienie i punktualność:</b> przy przyjeździe na przystanek końcowy odcinka, wobec rozkładu; godzina = godzina planowego przyjazdu. Pierwszego i ostatniego przystanku kursu nie da się zmierzyć (przyjazd na przystanek to moment, w którym feed przełącza się na następny). Komórki z mniej niż <span id="min-n">10</span> przejazdami pominięte. Źródło: ZTM Poznań (GTFS, GTFS-RT), pomiar własny. Podkład: © Esri, OpenStreetMap.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js"></script>
-<script src="logika.js"></script>
-<script src="mapa.js"></script>
+<script src="logika.js?v=e49e6ba063"></script>
+<script src="mapa.js?v=abb1de2859"></script>
 </body>
 </html>

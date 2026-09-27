@@ -156,64 +156,98 @@
   }
 
   /* --- punktualnosc ---------------------------------------------------- */
+  function wierszPunkt(r, etyk, P) {
+    var tr = document.createElement("tr");
+    if (r.s === "*") tr.className = "suma";
+    var pr = function (k) { return 100 * r[k] / r.n; };
+    tr.innerHTML = "<td>" + etyk + "</td><td><span class='slupek' title='przed / punktualnie / po'>" +
+      "<i style='width:" + pr("przed") + "%;background:" + P.szybciej + "'></i>" +
+      "<i style='width:" + pr("punkt") + "%;background:" + P.srodek + "'></i>" +
+      "<i style='width:" + pr("po") + "%;background:" + P.wolniej + "'></i></span></td>" +
+      "<td class='l'>" + Math.round(pr("punkt")) + "%</td><td class='l'>" + Math.round(pr("przed")) +
+      "%</td><td class='l'>" + Math.round(pr("po")) + "%</td><td class='l'>" + L_.fmtOpozn(r.med) +
+      "</td><td class='l'>" + L_.fmtOpozn(r.p90) + "</td><td class='l'>" + r.n.toLocaleString("pl-PL") + "</td>";
+    return tr;
+  }
+
+  function cel(l, k) {
+    var t = punkt.trasy[l] && punkt.trasy[l][k];
+    return t ? "\u2192 " + t.cel : "kierunek " + k;
+  }
+
+  function ustawKierunki(linia) {
+    var sel = document.getElementById("p-kierunek"), et = document.getElementById("p-kier-etyk");
+    sel.innerHTML = "";
+    var ks = Object.keys(punkt.trasy[linia] || {}).sort();
+    ks.forEach(function (k) {
+      var o = document.createElement("option"); o.value = k; o.textContent = cel(linia, k); sel.appendChild(o);
+    });
+    et.hidden = !linia || !ks.length;
+  }
+
   function tabelaPunkt() {
     var P = L_.MOTYWY[motyw()];
     var przyst = document.getElementById("p-przystanek").value.trim();
     var linia = document.getElementById("p-linia").value;
+    var kier = document.getElementById("p-kierunek").value;
     var znany = !przyst || punkt.przystanki.has(przyst);
-    var w = znany ? L_.filtrPunkt(punkt.wiersze, przyst, linia) : [];
-    document.getElementById("p-kol").textContent = linia && !przyst ? "Przystanek" : "Linia";
+    var wynik = znany ? L_.filtrPunkt(punkt, przyst, linia, kier) : { glowne: [], inne: [] };
+    var widokLinii = linia && !przyst;
+    document.getElementById("p-kol").textContent = widokLinii ? "Przystanek (kolejno\u015b\u0107 trasy)" : "Linia i kierunek";
+    var perony = widokLinii ? L_.etykietyPeronow(punkt, linia, kier || Object.keys(punkt.trasy[linia] || {})[0], punkt.nazwy) : {};
+    var etyk = function (r) {
+      if (r.s === "*" && r.p === "*") return r.l + " " + cel(r.l, r.k) + (widokLinii ? " \u2014 ca\u0142a trasa" : "");
+      if (r.s === "*") return "wszystkie linie";
+      if (widokLinii) return perony[r.s] || r.p;
+      return r.l + " " + cel(r.l, r.k);
+    };
     var tb = document.getElementById("p-tab");
     tb.innerHTML = "";
-    w.slice(0, 200).forEach(function (r) {
-      var tr = document.createElement("tr");
-      if (r.l === "*") tr.className = "suma";
-      var etyk = linia && !przyst ? r.p : (r.l === "*" ? "wszystkie linie" : r.l);
-      var pr = function (k) { return (100 * r[k] / r.n); };
-      tr.innerHTML = "<td>" + etyk + "</td><td><span class='slupek' title='przed / punktualnie / po'>" +
-        "<i style='width:" + pr("przed") + "%;background:" + P.szybciej + "'></i>" +
-        "<i style='width:" + pr("punkt") + "%;background:" + P.srodek + "'></i>" +
-        "<i style='width:" + pr("po") + "%;background:" + P.wolniej + "'></i></span></td>" +
-        "<td class='l'>" + Math.round(pr("punkt")) + "%</td><td class='l'>" + Math.round(pr("przed")) +
-        "%</td><td class='l'>" + Math.round(pr("po")) + "%</td><td class='l'>" + L_.fmtOpozn(r.med) +
-        "</td><td class='l'>" + L_.fmtOpozn(r.p90) + "</td><td class='l'>" + r.n.toLocaleString("pl-PL") + "</td>";
-      if (!linia && !przyst) {
+    wynik.glowne.slice(0, 300).forEach(function (r) {
+      var tr = wierszPunkt(r, etyk(r), P);
+      if (!przyst && !linia) {
         tr.style.cursor = "pointer";
         tr.addEventListener("click", function () {
-          document.getElementById("p-linia").value = r.l; tabelaPunkt();
+          document.getElementById("p-linia").value = r.l; ustawKierunki(r.l);
+          document.getElementById("p-kierunek").value = r.k; tabelaPunkt();
         });
       }
       tb.appendChild(tr);
     });
+    var blok = document.getElementById("p-inne-blok"), ti = document.getElementById("p-inne");
+    ti.innerHTML = "";
+    wynik.inne.forEach(function (r) { ti.appendChild(wierszPunkt(r, etyk(r), P)); });
+    blok.hidden = !wynik.inne.length;
+    document.getElementById("p-inne-tytul").textContent =
+      "Poza g\u0142\u00f3wn\u0105 tras\u0105: " + wynik.inne.length + " (zjazdy, objazdy, kursy skr\u00f3cone)";
     document.getElementById("p-info").textContent = !znany
-      ? "Nie znam przystanku „" + przyst + "” — wybierz z listy podpowiedzi."
-      : w.length > 200 ? "Pokazano 200 z " + w.length + " wierszy (najgorsze na górze)."
-      : !przyst && !linia ? "Kliknij linię, żeby zobaczyć jej przystanki." : "";
+      ? "Nie znam przystanku \u201e" + przyst + "\u201d \u2014 wybierz z listy podpowiedzi."
+      : !przyst && !linia ? "Kliknij wiersz, \u017ceby zobaczy\u0107 przystanki linii w tym kierunku." : "";
   }
 
   function startPunkt(p) {
     punkt = p;
+    punkt.nazwy = {};
+    p.wiersze.forEach(function (r) { if (r.s !== "*") punkt.nazwy[r.s] = r.p; });
     punkt.przystanki = new Set(p.wiersze.filter(function (r) { return r.p !== "*"; })
                                          .map(function (r) { return r.p; }));
     var lista = document.getElementById("p-lista");
     Array.from(punkt.przystanki).sort(function (a, b) { return a.localeCompare(b, "pl"); })
       .forEach(function (n) { var o = document.createElement("option"); o.value = n; lista.appendChild(o); });
-    var linie = Array.from(new Set(p.wiersze.filter(function (r) { return r.l !== "*"; })
-                                            .map(function (r) { return r.l; })))
-      .sort(function (a, b) { return a.localeCompare(b, "pl", { numeric: true }); });
+    var linie = Object.keys(p.trasy).sort(function (a, b) { return a.localeCompare(b, "pl", { numeric: true }); });
     var sel = document.getElementById("p-linia");
     linie.forEach(function (l) { var o = document.createElement("option"); o.value = l; o.textContent = l; sel.appendChild(o); });
     document.getElementById("p-przed").textContent = Math.abs(p.meta.przed_s / 60) + " min";
     document.getElementById("p-po").textContent = p.meta.po_s / 60 + " min";
-    ["p-przystanek", "p-linia"].forEach(function (id) {
-      document.getElementById(id).addEventListener("change", tabelaPunkt);
-    });
+    sel.addEventListener("change", function () { ustawKierunki(sel.value); tabelaPunkt(); });
+    document.getElementById("p-kierunek").addEventListener("change", tabelaPunkt);
+    document.getElementById("p-przystanek").addEventListener("change", tabelaPunkt);
     document.getElementById("p-przystanek").addEventListener("input", function (e) {
       if (punkt.przystanki.has(e.target.value.trim()) || !e.target.value) tabelaPunkt();
     });
     document.getElementById("p-wyczysc").addEventListener("click", function () {
       document.getElementById("p-przystanek").value = "";
-      document.getElementById("p-linia").value = "";
+      sel.value = ""; ustawKierunki("");
       tabelaPunkt();
     });
     tabelaPunkt();
@@ -260,6 +294,6 @@
   function blad(e) {
     document.getElementById("meta").textContent = "Błąd wczytywania danych: " + e;
   }
-  fetch("data/korki.json").then(function (r) { return r.json(); }).then(start).catch(blad);
-  fetch("data/punktualnosc.json").then(function (r) { return r.json(); }).then(startPunkt).catch(blad);
+  fetch("data/korki.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(start).catch(blad);
+  fetch("data/punktualnosc.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(startPunkt).catch(blad);
 })();
