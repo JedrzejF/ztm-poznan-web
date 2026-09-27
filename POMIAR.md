@@ -74,6 +74,11 @@ jeden, drugi pomiń (lepiej mniej, a pewnie).
 **Pomyłka:** „Cofnij” usuwa ostatnio zapisany moment. Zła kolejność
 (np. „Stanął” po „Ruszył”) zostanie zablokowana z komunikatem.
 
+**Kliknąłeś za wcześnie / za późno:** dotknij zapisanego przycisku (np.
+„Drzwi zamknięte 12:01:03.4”) → pojawi się korekta **−5 s / −1 s / +1 s /
++5 s**. Kolejność nadal pilnowana; korekty trafiają do CSV (kolumna
+`korekty`, np. `zamk+6`), więc wiadomo, które czasy są poprawione z pamięci.
+
 **Poprawki po fakcie:** lista „Zakończone” pokazuje godzinę, linię, pojazd
 i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
 
@@ -95,11 +100,9 @@ i „Ruszył”, nie licz.
   **−** poprawia pomyłkę.
 - **Zapełnienie** jednym dotknięciem: luźno / siedzenia zajęte / stoją.
 
-Uzupełnienie na dużą skalę: plik ZTM
-`Wymiana_pasazerska_wraz_z_rankingiem_na_strone_2023_aktualizacja_zatrzyman_04_07_2024.xlsx`
-(zawartość do sprawdzenia — opis z nazwy pliku). Jeśli zawiera wymianę na
-przystankach, pozwoli skorelować postój z GPS z wymianą na **wszystkich**
-przystankach; pomiar terenowy da szczegół dla pojedynczych postojów.
+Pliki `Wymiana_pasazerska_*.xlsx` (sprawdzone 27.09) to dane UTK o **stacjach
+kolejowych** w Polsce — nie dotyczą przystanków ZTM. Wymianę na przystankach
+daje tylko własne liczenie (tryb „Jadę pojazdem” — dużo postojów na godzinę).
 
 ## Pomiar poza planem (dowolny przystanek)
 
@@ -133,6 +136,20 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    raz na przejazd, zawsze to samo.
 4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej,
    potem **zapełnienie po odjeździe** (luźno / siedzenia zajęte / stoją / ścisk).
+   **Znaczniki** (każdy mierzy czas — 1. dotknięcie start, 2. koniec,
+   3. kasuje; bez końca trwa do „Dalej”):
+   - **czeka na czas** — kierowca przetrzymuje pojazd (przyjechał za
+     wcześnie), drzwi otwarte lub zamknięte, bez wymiany;
+   - **korek / światło przed peronem** — stoi przed wjazdem na przystanek;
+   - **światło za przystankiem** — po zamknięciu drzwi czeka na zielone.
+
+   **Notatka do tego przystanku** — krótki tekst przypięty do przystanku
+   (np. „dobiegł pasażer”), zamiast uwag do całego przejazdu.
+
+   **W pojeździe po odjeździe** (opcjonalnie): wpisz liczbę osób, gdy
+   policzysz — przy wejściu albo na dowolnym późniejszym przystanku. Dalej
+   notatnik szacuje sam z liczników (≈ w polu i na liście); każda nowa
+   wpisana liczba koryguje szacunek.
 5. Skończyłeś liczyć (także już w trakcie jazdy) → **Dalej ▶**. Liczniki od
    zera, przystanek przechodzi na następny. To **nie** jest moment odjazdu —
    zapisuje się czas pierwszego „+” na przystanku i czas „Dalej”.
@@ -145,7 +162,9 @@ zawężają okno. **Eksport CSV w trybie „Jadę pojazdem”** daje plik
 `przejazdy_*.csv` (w trybie „Na przystanku” — `pomiar_*.csv`; osobno, bo
 udostępnianie dwóch plików naraz w telefonie oddawało tylko pierwszy).
 Wiersz na postój: `id, linia, pojazd, kierunek, cel, zakres, lp, przystanek,
-t_pierwsze, t_zapis, wsiadlo, wysiadlo, tlok, uwagi` (czasy w ms od epoki, UTC). Trasy w notatniku to wariant główny kierunku z aktualnego
+t_pierwsze, t_zapis, wsiadlo, wysiadlo, tlok, obciazenie, obciazenie_szac, z_czas_s, z_przed_s, z_za_s, uwaga_przyst,
+uwagi` (czasy w ms od epoki, UTC; `obciazenie` wpisane, `obciazenie_szac`
+z bilansu; `z_*_s` — czas trwania znaczników w sekundach). Trasy w notatniku to wariant główny kierunku z aktualnego
 rozkładu (ten sam co w tabeli punktualności); kursy skrócone kończą się
 wcześniej — wtedy po prostu **Zakończ**.
 

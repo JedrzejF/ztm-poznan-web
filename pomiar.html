@@ -85,6 +85,23 @@
   .biezacy input { font: 15px system-ui, sans-serif; padding: 8px; border-radius: 8px; border: 1px solid var(--linia);
                    background: var(--tlo); color: var(--tekst); }
   #jazda details input { width: 100%; }
+  .znaczniki { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .znaczniki button { min-height: 52px; font: 600 13px/1.2 system-ui, sans-serif; border-radius: 8px; padding: 6px 4px;
+                      border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
+  .znaczniki button small { display: block; font: 500 11px/1.2 system-ui, sans-serif; color: var(--tekst-2); margin-top: 3px; }
+  .znaczniki button.trwa { border: 2px solid #e3a008; }
+  .znaczniki button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  .znaczniki button.zrobione small { color: #fff; }
+  .uwaga-przyst { width: 100%; margin-top: 8px; font: 15px system-ui, sans-serif; padding: 8px; border-radius: 8px;
+                  border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
+  .korekta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 8px 0; padding: 8px;
+             border: 2px solid #e3a008; border-radius: 10px; font-size: 14px; }
+  .korekta span { flex-basis: 100%; }
+  .korekta button { flex: 1; min-height: 44px; font: 600 15px system-ui, sans-serif; border-radius: 8px;
+                    border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
+  .obciazenie { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--tekst-2); margin-top: 10px; }
+  .obciazenie input { font: 600 18px system-ui, sans-serif; padding: 8px 10px; border-radius: 8px; width: 9em;
+                      border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   .podpowiedzi { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .szybkie { display: flex; gap: 6px; flex-basis: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .szybkie::-webkit-scrollbar { display: none; }
@@ -135,7 +152,7 @@
   <button id="wyczysc" type="button">Wyczyść</button>
 </div>
 
-<script src="pomiar-logika.js?v=8d94e47ae2"></script>
-<script src="pomiar.js?v=bf2bf7e9fc"></script>
+<script src="pomiar-logika.js?v=75f00fb0bb"></script>
+<script src="pomiar.js?v=6eed1b4041"></script>
 </body>
 </html>

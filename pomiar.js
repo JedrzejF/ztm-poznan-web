@@ -61,6 +61,12 @@
                (k >= 4 ? "drugie" : "") + "' title='" + z.opis + "'>" + z.etykieta +
                (t !== undefined ? "<small>" + hms(t) + "</small>" : "") + "</button>";
       }).join("") + "</div>" +
+      (stan.edycja && stan.edycja.id === obs.id && obs.czasy[stan.edycja.kod] !== undefined ?
+        "<div class='korekta'><span>" + esc(P.ZDARZENIA.filter(function (z) { return z.kod === stan.edycja.kod; })[0].etykieta) +
+        " <b>" + hms(obs.czasy[stan.edycja.kod]) + "</b></span>" +
+        [-5, -1, 1, 5].map(function (d) {
+          return "<button type='button' data-przesun='" + d + "'>" + (d > 0 ? "+" : "\u2212") + Math.abs(d) + " s</button>";
+        }).join("") + "<button type='button' data-przesun='ok'>OK</button></div>" : "") +
       "<div class='pasazerowie'>" +
       "<div class='licznik'><span>Wsiada <b>" + (obs.wsiadlo || 0) + "</b></span>" +
       "<button type='button' data-licz='wsiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wsiadlo' data-d='-1'>\u2212</button></div>" +
@@ -76,7 +82,8 @@
       "<div class='wyniki'>" + [
         tr.postoj !== null ? "postój " + tr.postoj.toFixed(1) + " s" : null,
         tr.drzwi !== null ? "drzwi " + tr.drzwi.toFixed(1) + " s" : null,
-        tr.swiatlo !== null ? "2. zatrzymanie " + tr.swiatlo.toFixed(1) + " s" : null
+        tr.swiatlo !== null ? "2. zatrzymanie " + tr.swiatlo.toFixed(1) + " s" : null,
+        P.opisKorekt(obs) ? "korekty: " + P.opisKorekt(obs) : null
       ].filter(Boolean).join(" · ") + "</div>" +
       "<details><summary>Okoliczności i uwagi</summary>" +
       P.FLAGI.map(function (f) {
@@ -93,6 +100,12 @@
     el.querySelectorAll("[data-zd]").forEach(function (b) {
       b.addEventListener("click", function () {
         var t = Date.now();                     // moment dotkniecia - przed czymkolwiek innym
+        if (stan.otwarte[i].czasy[b.dataset.zd] !== undefined) {
+          // zapisany moment: dotkniecie otwiera korekte o +/- sekundy (27.09)
+          var ta = stan.edycja && stan.edycja.id === obs.id && stan.edycja.kod === b.dataset.zd;
+          stan.edycja = ta ? null : { id: obs.id, kod: b.dataset.zd };
+          rysuj(); return;
+        }
         try {
           stan.otwarte[i] = P.zapisz(stan.otwarte[i], b.dataset.zd, t);
           if (navigator.vibrate) navigator.vibrate(30);
@@ -123,6 +136,15 @@
     });
     el.querySelector("[data-akcja=cofnij]").addEventListener("click", function () {
       stan.otwarte[i] = P.cofnij(stan.otwarte[i]); zapisz(); rysuj();
+    });
+    el.querySelectorAll("[data-przesun]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.dataset.przesun === "ok") { stan.edycja = null; rysuj(); return; }
+        try {
+          stan.otwarte[i] = P.przesun(stan.otwarte[i], stan.edycja.kod, Number(b.dataset.przesun) * 1000);
+          zapisz(); rysuj();
+        } catch (e) { kom.textContent = e.message; }
+      });
     });
     var zm = el.querySelector("[data-akcja=przyst]");
     if (zm) zm.addEventListener("click", function () {
@@ -278,6 +300,13 @@
     catch (e) { var k = document.querySelector("#jazda .komunikat"); if (k) k.textContent = e.message; return false; }
   }
 
+  // 1. dotkniecie start, 2. stop, 3. kasuje; trwajacy odlicza na zywo (tik niżej)
+  function opisZnacznika(x) {
+    if (!x) return "dotknij: start";
+    if (x.do === undefined) return "\u23f1 " + Math.round((Date.now() - x.od) / 1000) + " s \u2014 dotknij: koniec";
+    return P.trwanieZnacznika(x) + " s \u2713 (dotknij: skasuj)";
+  }
+
   function etTlok(k) { var x = P.TLOK.filter(function (t) { return t[0] === k; })[0]; return x ? x[1] : k; }
 
   function rysujJazde() {
@@ -302,6 +331,10 @@
     }
     var kier = trasy[j.linia] || {};
     var b = j.biezacy;
+    // szacunek dla biezacego przystanku: ostatnia znana liczba + bilans licznikow
+    var sz = P.szacujObciazenie(j.postoje.concat([Object.assign({}, b, { obciazenie: "" })]));
+    var szTu = sz[sz.length - 1];
+    var szPost = P.szacujObciazenie(j.postoje);
     var trasa = j.trasa || [];
     el.innerHTML =
       "<article class='karta'>" +
@@ -332,6 +365,16 @@
       "<div class='tlok'>" + P.TLOK.map(function (x) {
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (b.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
       }).join("") + "</div>" +
+      "<div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
+        var x = (b.znaczniki || {})[z[0]];
+        var kl = !x ? "" : x.do === undefined ? "trwa" : "zrobione";
+        return "<button type='button' data-znak='" + z[0] + "' class='" + kl + "'>" + esc(z[1]) +
+          "<small data-znak-czas='" + z[0] + "'>" + opisZnacznika(x) + "</small></button>";
+      }).join("") + "</div>" +
+      "<input class='uwaga-przyst' data-uwaga type='text' placeholder='notatka do tego przystanku' value='" + esc(b.uwaga || "") + "'>" +
+      "<label class='obciazenie'>W pojeździe po odjeździe <small>(opcjonalnie; potem liczy się samo)</small>" +
+      "<input data-obc type='number' inputmode='numeric' min='0' value='" + esc(b.obciazenie === undefined ? "" : b.obciazenie) +
+      "' placeholder='" + (szTu === null ? "np. 23" : "\u2248 " + szTu) + "'></label>" +
       "<div class='przyciski' style='margin-top:10px'>" +
       "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button>" +
       "<button type='button' data-akcja='pomin'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
@@ -340,9 +383,15 @@
         return "<option value='" + z[0] + "'" + (j.zakres === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
       }).join("") + "</select></label>" +
       "<details><summary>Uwagi</summary><input type='text' data-pole='uwagi' value='" + esc(j.uwagi) + "'></details>" +
-      "<div class='lista' style='margin:10px 0 0'>" + j.postoje.slice(-6).reverse().map(function (p) {
+      "<div class='lista' style='margin:10px 0 0'>" + j.postoje.map(function (p, k) { return [p, szPost[k]]; }).slice(-6).reverse().map(function (x) {
+        var p = x[0], o = x[1];
         return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) + "</span><span>+" + p.wsiadlo +
-          " \u2212" + p.wysiadlo + (p.tlok ? " \u00b7 " + esc(etTlok(p.tlok)) : "") + "</span></div>";
+          " \u2212" + p.wysiadlo + (o !== null ? " \u00b7 " + (p.obciazenie !== undefined && p.obciazenie !== "" ? "" : "\u2248") + o + " os." : "") +
+          (p.tlok ? " \u00b7 " + esc(etTlok(p.tlok)) : "") +
+          P.ZNACZNIKI.map(function (z) {
+            var d = P.trwanieZnacznika((p.znaczniki || {})[z[0]], p.t);
+            return d === null ? "" : " \u00b7 " + z[0] + " " + d + " s";
+          }).join("") + (p.uwaga ? " \u00b7 \u270e" : "") + "</span></div>";
       }).join("") + "</div>" +
       "<div class='stopka-karty'><button type='button' data-akcja='cofnij'>Cofnij \u201eDalej\u201d</button>" +
       "<button type='button' data-akcja='usun'>Usu\u0144</button>" +
@@ -371,6 +420,20 @@
         var t = kier[bt.dataset.kier];
         zmienPrzejazd(function (x) { return P.ustawTrase(x, bt.dataset.kier, t.cel, t.przystanki); });
       });
+    });
+    el.querySelectorAll("[data-znak]").forEach(function (bt) {
+      bt.addEventListener("click", function () {
+        var t = Date.now();
+        if (navigator.vibrate) navigator.vibrate(20);
+        zmienPrzejazd(function (x) { return P.przelaczZnacznik(x, bt.dataset.znak, t); });
+      });
+    });
+    var uw = el.querySelector("[data-uwaga]");
+    uw.addEventListener("input", function () { stan.przejazd.biezacy.uwaga = uw.value; zapisz(); });
+    var obc = el.querySelector("[data-obc]");
+    obc.addEventListener("input", function () {          // bez przerysowania - nie gubic klawiatury
+      stan.przejazd.biezacy.obciazenie = obc.value.trim() === "" ? "" : Math.max(0, Math.round(Number(obc.value)));
+      zapisz();
     });
     var sel = el.querySelector("[data-przyst]");
     if (sel) sel.addEventListener("change", function () {
@@ -463,6 +526,10 @@
     setInterval(function () {
       document.getElementById("zegar").textContent =
         new Date().toLocaleTimeString("pl-PL", { hour12: false });
+      // trwajace znaczniki: tylko tekst, bez przerysowania (nie gubic klawiatury)
+      if (stan.przejazd) document.querySelectorAll("[data-znak-czas]").forEach(function (el) {
+        el.textContent = opisZnacznika((stan.przejazd.biezacy.znaczniki || {})[el.dataset.znakCzas]);
+      });
     }, 200);
     // ekran nie gasnie w trakcie pomiaru (tam, gdzie przegladarka pozwala)
     if (navigator.wakeLock) {

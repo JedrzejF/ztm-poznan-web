@@ -77,6 +77,26 @@
     return Object.assign({}, obs, { czasy: c });
   }
 
+  /* Korekta zapisanego momentu o delta ms (27.09: "drzwi zamkniete 6 s pozniej
+     niz kliknalem" - zamiast notatki). Kolejnosc pilnowana jak przy zapisie;
+     suma korekt kazdego zdarzenia zostaje w obserwacji i trafia do CSV -
+     wiadomo, ktore czasy sa z klikniecia, a ktore poprawione z pamieci. */
+  function przesun(obs, kod, delta) {
+    if (obs.czasy[kod] === undefined) throw new Error(kod + " nie jest zapisane");
+    var bez = {}; Object.keys(obs.czasy).forEach(function (k) { if (k !== kod) bez[k] = obs.czasy[k]; });
+    var o = zapisz(Object.assign({}, obs, { czasy: bez }), kod, obs.czasy[kod] + delta);
+    var kor = Object.assign({}, obs.korekty || {});
+    kor[kod] = (kor[kod] || 0) + delta;
+    if (!kor[kod]) delete kor[kod];
+    return Object.assign(o, { korekty: kor });
+  }
+
+  function opisKorekt(obs) {
+    return Object.keys(obs.korekty || {}).map(function (k) {
+      var d = obs.korekty[k] / 1000; return k + (d > 0 ? "+" : "") + d;
+    }).join(" ");
+  }
+
   /* Cofniecie ostatnio zapisanego (najpozniejszego) zdarzenia. */
   function cofnij(obs) {
     var ost = null;
@@ -168,10 +188,50 @@
     licznik += 1;
     return { id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
              zakres: "caly", uwagi: "", postoje: [], utworzona: teraz,
-             biezacy: { przystanek: "", wsiadlo: 0, wysiadlo: 0, tlok: "" } };
+             biezacy: { przystanek: "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "" } };
   }
 
-  function _pusty(przystanek) { return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "" }; }
+  function _pusty(przystanek) {
+    return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "", znaczniki: {}, uwaga: "" };
+  }
+
+  /* Znaczniki postoju w trakcie jazdy (27.09: notatki "Krzesiny 170 s czekania
+     na czas" trafialy do uwag calego przejazdu). Kazdy znacznik mierzy czas:
+     1. dotkniecie = poczatek, 2. = koniec, 3. = skasowanie (pomylka).
+     Bez konca - trwa do "Dalej". */
+  var ZNACZNIKI = [["czas", "czeka na czas"], ["przed", "korek / \u015bwiat\u0142o przed peronem"],
+                   ["za", "\u015bwiat\u0142o za przystankiem"]];
+
+  function przelaczZnacznik(prz, kod, t) {
+    var b = Object.assign({}, prz.biezacy), z = Object.assign({}, b.znaczniki || {});
+    var x = z[kod];
+    if (!x) z[kod] = { od: t };
+    else if (x.do === undefined) z[kod] = { od: x.od, do: Math.max(t, x.od) };
+    else delete z[kod];
+    b.znaczniki = z;
+    return Object.assign({}, prz, { biezacy: b });
+  }
+
+  /* Czas trwania znacznika [s]; niezamkniety liczony do `koniec` (Dalej). */
+  function trwanieZnacznika(x, koniec) {
+    if (!x) return null;
+    var k = x.do !== undefined ? x.do : koniec;
+    return k === undefined ? null : Math.round((k - x.od) / 100) / 10;
+  }
+
+  /* Liczba osob w pojezdzie PO odjezdzie z przystanku (27.09, prosba autora):
+     wpisana recznie gdziekolwiek (przy wejsciu albo pozniej) jest kotwica,
+     dalej szacunek = kotwica + suma (wsiadlo - wysiadlo) kolejnych postojow.
+     Przed pierwsza kotwica szacunku nie ma - liczby wsteczne bylyby zgadywane. */
+  function szacujObciazenie(postoje) {
+    var wynik = [], biez = null;
+    postoje.forEach(function (p) {
+      if (p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null) biez = Number(p.obciazenie);
+      else if (biez !== null) biez = Math.max(0, biez + (p.wsiadlo || 0) - (p.wysiadlo || 0));
+      wynik.push(biez);
+    });
+    return wynik;
+  }
 
   /* Wybor kierunku: trasa = lista stop_id; biezacy = pierwszy przystanek,
      chyba ze biezacy juz lezy na tej trasie (zmiana kierunku w trakcie). */
@@ -248,7 +308,7 @@
 
   var KOLUMNY = ["id", "przystanek", "linia", "pojazd"].concat(KODY.map(function (k) { return "t_" + k; }))
     .concat(FLAGI.map(function (f) { return "f_" + f.kod; }))
-    .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona"]);
+    .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty"]);
 
   /* CSV: czasy jako ms od epoki (UTC) - jednoznaczne, do zlaczenia z vehicle_ts. */
   function csv(obserwacje) {
@@ -257,22 +317,27 @@
       var r = [o.id, o.przystanek, o.linia, o.pojazd]
         .concat(KODY.map(function (k) { return o.czasy[k]; }))
         .concat(FLAGI.map(function (f) { return o.flagi[f.kod] ? 1 : 0; }))
-        .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona]);
+        .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona, opisKorekt(o)]);
       w.push(r.map(csvPole).join(","));
     });
     return w.join("\n") + "\n";
   }
 
   var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
-                           "t_pierwsze", "t_zapis", "wsiadlo", "wysiadlo", "tlok", "uwagi"];
+                           "t_pierwsze", "t_zapis", "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_szac"]
+    .concat(ZNACZNIKI.map(function (z) { return "z_" + z[0] + "_s"; })).concat(["uwaga_przyst", "uwagi"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
     var w = [KOLUMNY_PRZEJAZDU.join(",")];
     lista.forEach(function (j) {
+      var sz = szacujObciazenie(j.postoje);
       j.postoje.forEach(function (p, k) {
         w.push([j.id, j.linia, j.pojazd, j.kierunek, j.cel, j.zakres, k + 1, p.przystanek, p.t0, p.t,
-                p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", j.uwagi].map(csvPole).join(","));
+                p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", p.obciazenie === undefined ? "" : p.obciazenie,
+                sz[k] === null ? "" : sz[k]]
+          .concat(ZNACZNIKI.map(function (z) { var d = trwanieZnacznika((p.znaczniki || {})[z[0]], p.t); return d === null ? "" : d; }))
+          .concat([p.uwaga || "", j.uwagi]).map(csvPole).join(","));
       });
     });
     return w.join("\n") + "\n";
@@ -281,7 +346,9 @@
   return { ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
-           tenSamPrzystanek: tenSamPrzystanek,
+           tenSamPrzystanek: tenSamPrzystanek, szacujObciazenie: szacujObciazenie,
+           ZNACZNIKI: ZNACZNIKI, przelaczZnacznik: przelaczZnacznik, trwanieZnacznika: trwanieZnacznika,
+           przesun: przesun, opisKorekt: opisKorekt,
            brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,
            ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
            etykietaPrzystanku: etykietaPrzystanku, idZTekstu: idZTekstu,
