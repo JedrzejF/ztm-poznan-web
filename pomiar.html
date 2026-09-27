@@ -12,6 +12,16 @@
   .pasek-gora { position: sticky; top: 0; z-index: 5; background: var(--tlo); padding: 10px 0;
                 border-bottom: 1px solid var(--linia); display: flex; gap: 12px; align-items: center;
                 flex-wrap: wrap; max-width: 720px; margin: 0 auto; }
+  .szukaj { position: relative; flex: 1 1 200px; min-width: 0; }
+  .szukaj input { width: 100%; font-size: 16px; }
+  .podpowiedzi { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+                 background: var(--tlo); border: 1px solid var(--linia); border-radius: 10px;
+                 max-height: 55vh; overflow-y: auto; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  .podpowiedzi button { display: block; width: 100%; text-align: left; padding: 12px; min-height: 48px;
+                        border: 0; border-bottom: 1px solid var(--linia); background: none; color: var(--tekst);
+                        font: 15px/1.3 system-ui, sans-serif; touch-action: manipulation; }
+  .podpowiedzi button small { display: block; color: var(--tekst-2); font-size: 12px; margin-top: 2px; }
+  .podpowiedzi .pusto { padding: 12px; color: var(--tekst-2); font-size: 14px; }
   .pasek-gora input { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--linia);
                        background: var(--tlo); color: var(--tekst); flex: 1 1 200px; min-width: 0; }
   .karty, .lista { max-width: 720px; margin: 12px auto; display: grid; gap: 12px; }
@@ -66,8 +76,11 @@
 </header>
 <div class="pasek-gora">
   <span class="zegar" id="zegar">--:--:--</span>
-  <input id="przystanek" list="przystanki-lista" placeholder="Przystanek — zacznij pisać nazwę" aria-label="Przystanek" autocomplete="off">
-  <datalist id="przystanki-lista"></datalist>
+  <div class="szukaj">
+    <input id="przystanek" type="search" placeholder="Przystanek — wpisz 2+ litery" aria-label="Przystanek"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+    <div id="podpowiedzi" class="podpowiedzi" role="listbox" hidden></div>
+  </div>
 </div>
 
 <section class="karty" id="karty" aria-live="polite"></section>
@@ -79,7 +92,7 @@
   <button id="wyczysc" type="button">Wyczyść</button>
 </div>
 
-<script src="pomiar-logika.js?v=f275aa4c45"></script>
-<script src="pomiar.js?v=c2929d5c19"></script>
+<script src="pomiar-logika.js?v=4698c4de2e"></script>
+<script src="pomiar.js?v=2789f26ca3"></script>
 </body>
 </html>

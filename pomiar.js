@@ -160,23 +160,51 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
 
-  function listaPrzystankow(lista) {
-    var dl = document.getElementById("przystanki-lista");
-    dl.innerHTML = "";
-    lista.forEach(function (tekst) {
-      var o = document.createElement("option"); o.value = tekst; dl.appendChild(o);
+  // Wlasna lista podpowiedzi zamiast <datalist> - na telefonach datalist
+  // nie pokazywal podpowiedzi (27.09, zgloszenie autora).
+  var wszystkie = PRZYSTANKI.map(function (p) {
+    return { s: p[0], n: p[1].replace(/ \d+ .*/, "").replace(/ \(.*/, ""), k: "", l: [], t: "" };
+  });
+
+  function wybierz(pole, p) {
+    pole.value = P.etykietaPrzystanku(p);
+    stan.przystanekTekst = pole.value; stan.przystanek = p.s; zapisz();
+    document.getElementById("podpowiedzi").hidden = true;
+    pole.blur();
+  }
+
+  function podpowiedzi(pole) {
+    var box = document.getElementById("podpowiedzi");
+    var wyn = P.szukajPrzystankow(wszystkie, pole.value, 12);
+    box.innerHTML = "";
+    if (pole.value.trim().length < 2) { box.hidden = true; return; }
+    if (!wyn.length) {
+      box.innerHTML = "<div class='pusto'>Brak takiego przystanku \u2014 zostanie zapisany wpisany tekst.</div>";
+    }
+    wyn.forEach(function (p) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = esc(p.n) + (p.k ? " \u2192 " + esc(p.k) : "") +
+        "<small>[" + esc(p.s) + "] " + esc((p.t === "0" ? "tramwaj " : p.t === "3" ? "autobus " : "") + p.l.join(", ")) + "</small>";
+      // pointerdown, nie click: klikniecie zamyka klawiature i lista znika, zanim click dotrze
+      b.addEventListener("pointerdown", function (e) { e.preventDefault(); wybierz(pole, p); });
+      box.appendChild(b);
     });
+    box.hidden = false;
   }
 
   function start() {
     wczytaj();
     var pole = document.getElementById("przystanek");
-    // bez sieci zostaje lista z planu proby
-    listaPrzystankow(PRZYSTANKI.map(function (p) { return p[1] + " [" + p[0] + "]"; }));
     fetch("data/przystanki.json", { cache: "no-cache" }).then(function (r) { return r.json(); })
-      .then(function (d) { listaPrzystankow(d.przystanki.map(P.etykietaPrzystanku)); })
-      .catch(function () {});
+      .then(function (d) { wszystkie = d.przystanki; if (document.activeElement === pole) podpowiedzi(pole); })
+      .catch(function () { /* bez sieci zostaje lista z planu proby */ });
     pole.value = stan.przystanekTekst || "";
+    pole.addEventListener("input", function () { podpowiedzi(pole); });
+    pole.addEventListener("focus", function () { if (pole.value) podpowiedzi(pole); });
+    pole.addEventListener("blur", function () {
+      setTimeout(function () { document.getElementById("podpowiedzi").hidden = true; }, 150);
+    });
     pole.addEventListener("change", function () {
       stan.przystanekTekst = pole.value; stan.przystanek = P.idZTekstu(pole.value); zapisz();
     });

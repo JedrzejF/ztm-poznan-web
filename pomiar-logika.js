@@ -123,6 +123,30 @@
     return m ? m[1] : (tekst || "").trim();
   }
 
+  /* Wyszukiwanie przystankow dla wlasnej listy podpowiedzi (datalist nie
+     dziala na telefonach - 27.09). Bez polskich znakow i wielkosci liter;
+     kolejnosc: nazwa od poczatku > slowo od poczatku > gdziekolwiek. */
+  function normuj(t) {
+    return String(t || "").toLowerCase().replace(/\u0142/g, "l")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function szukajPrzystankow(lista, zapytanie, ile) {
+    var q = normuj(zapytanie).trim();
+    if (q.length < 2) return [];
+    var wyniki = [];
+    lista.forEach(function (p) {
+      var n = normuj(p.n), pelny = normuj(p.n + " " + (p.k || "") + " " + p.s);
+      var w = n.indexOf(q) === 0 ? 0
+            : (" " + n).indexOf(" " + q) >= 0 || (" " + n).indexOf("." + q) >= 0 || (" " + n).indexOf("/" + q) >= 0 ? 1
+            : pelny.indexOf(q) >= 0 ? 2 : -1;
+      if (w >= 0) wyniki.push([w, p]);
+    });
+    wyniki.sort(function (a, b) {
+      return a[0] - b[0] || a[1].n.localeCompare(b[1].n, "pl") || (a[1].k || "").localeCompare(b[1].k || "", "pl");
+    });
+    return wyniki.slice(0, ile || 12).map(function (x) { return x[1]; });
+  }
+
   function csvPole(v) {
     var s = v === undefined || v === null ? "" : String(v);
     return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -147,6 +171,7 @@
 
   return { ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
            etykietaPrzystanku: etykietaPrzystanku, idZTekstu: idZTekstu,
+           normuj: normuj, szukajPrzystankow: szukajPrzystankow,
            nowa: nowa, zapisz: zapisz, cofnij: cofnij, zlicz: zlicz, braki: braki,
            trwanie: trwanie, csv: csv };
 }));
