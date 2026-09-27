@@ -17,10 +17,9 @@
     ["629", "Swoboda 629 → Szpitalna (światło za)"],
     ["1131", "Małe Garbary 1131 (bez świateł)"],
     ["1130", "Grochowe Łąki 1130 (światło za)"],
-    ["inny", "Inny (wpisz w uwagach)"]
   ];
 
-  var stan = { otwarte: [], zamkniete: [], przystanek: "117" };
+  var stan = { otwarte: [], zamkniete: [], przystanek: "", przystanekTekst: "" };
 
   function wczytaj() {
     try {
@@ -161,14 +160,26 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
   }
 
+  function listaPrzystankow(lista) {
+    var dl = document.getElementById("przystanki-lista");
+    dl.innerHTML = "";
+    lista.forEach(function (tekst) {
+      var o = document.createElement("option"); o.value = tekst; dl.appendChild(o);
+    });
+  }
+
   function start() {
     wczytaj();
-    var sel = document.getElementById("przystanek");
-    PRZYSTANKI.forEach(function (p) {
-      var o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; sel.appendChild(o);
+    var pole = document.getElementById("przystanek");
+    // bez sieci zostaje lista z planu proby
+    listaPrzystankow(PRZYSTANKI.map(function (p) { return p[1] + " [" + p[0] + "]"; }));
+    fetch("data/przystanki.json", { cache: "no-cache" }).then(function (r) { return r.json(); })
+      .then(function (d) { listaPrzystankow(d.przystanki.map(P.etykietaPrzystanku)); })
+      .catch(function () {});
+    pole.value = stan.przystanekTekst || "";
+    pole.addEventListener("change", function () {
+      stan.przystanekTekst = pole.value; stan.przystanek = P.idZTekstu(pole.value); zapisz();
     });
-    sel.value = stan.przystanek;
-    sel.addEventListener("change", function () { stan.przystanek = sel.value; zapisz(); });
     document.getElementById("nowy").addEventListener("click", function () {
       stan.otwarte.unshift(P.nowa(stan.przystanek, Date.now())); zapisz(); rysuj();
       var pierwsze = document.querySelector("#karty [data-pole=linia]");

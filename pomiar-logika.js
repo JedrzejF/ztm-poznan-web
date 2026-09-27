@@ -110,6 +110,19 @@
              swiatlo: d("stop2", "rusz2"), calosc: c.rusz2 !== undefined ? d("stop", "rusz2") : d("stop", "rusz") };
   }
 
+  /* Przystanek w wyszukiwarce: "Fredry \u2192 Gwarna [117] \u00b7 tramwaj 3, 4".
+     Z wybranego wpisu bierzemy id slupka; tekst wpisany recznie zostaje
+     tekstem (dopasowanie do GPS i tak idzie po numerze taborowym i czasie). */
+  var TYP = { "0": "tramwaj", "3": "autobus", "0,3": "tramwaj/autobus" };
+  function etykietaPrzystanku(p) {
+    return p.n + (p.k ? " \u2192 " + p.k : "") + " [" + p.s + "] \u00b7 " +
+      (TYP[p.t] || "") + " " + p.l.join(", ");
+  }
+  function idZTekstu(tekst) {
+    var m = /.*\[(\w+)\]/.exec(tekst || "");   // OSTATNI nawias - nazwa tez moze go miec
+    return m ? m[1] : (tekst || "").trim();
+  }
+
   function csvPole(v) {
     var s = v === undefined || v === null ? "" : String(v);
     return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -133,6 +146,7 @@
   }
 
   return { ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
+           etykietaPrzystanku: etykietaPrzystanku, idZTekstu: idZTekstu,
            nowa: nowa, zapisz: zapisz, cofnij: cofnij, zlicz: zlicz, braki: braki,
            trwanie: trwanie, csv: csv };
 }));

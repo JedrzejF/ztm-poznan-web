@@ -91,6 +91,24 @@ Uzupełnienie na dużą skalę: plik ZTM
 przystankach, pozwoli skorelować postój z GPS z wymianą na **wszystkich**
 przystankach; pomiar terenowy da szczegół dla pojedynczych postojów.
 
+## Pomiar poza planem (dowolny przystanek)
+
+Można mierzyć **gdziekolwiek** — dopasowanie do GPS idzie po numerze
+taborowym i czasie, a przystanek wynika z trajektorii pojazdu. W notatniku
+wpisz początek nazwy i wybierz słupek z kierunkiem („Fredry → Gwarna [117]”).
+
+- Nie ma minimum na przystanek: jednostką analizy jest **grupa**
+  (tramwaj/autobus × światło za przystankiem / brak), nie przystanek.
+  Kilka przystanków po kilka–kilkanaście obserwacji to nawet lepiej niż
+  jeden — wynik nie zależy od jednego miejsca.
+- **Unikaj pętli i przystanków końcowych** (postój regulacyjny; odjazdu
+  z ostatniego przystanku GPS nie zmierzy).
+- Nie wiesz, czy za przystankiem jest światło → wpisz w uwagach
+  „światło za” albo „brak”.
+- Niedziela i święta: ważne dla pomiaru hamowania i ruszania (mały ruch to
+  zaleta), oznaczane w analizie osobno; wpływ świateł i kolejek w szczycie —
+  tylko dni robocze.
+
 ## Numer taborowy — obowiązkowo
 
 Na boku i z przodu pojazdu: **3 cyfry tramwaj, 4 cyfry autobus**. To klucz do
