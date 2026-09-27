@@ -41,11 +41,16 @@
     return d.toLocaleTimeString("pl-PL", { hour12: false }) + "." + String(d.getMilliseconds()).padStart(3, "0").slice(0, 1);
   }
 
+  function godz(t) { return t ? new Date(t).toLocaleTimeString("pl-PL", { hour12: false }) : "--:--"; }
+
   function karta(obs, i) {
     var el = document.createElement("article");
     el.className = "karta";
     var tr = P.trwanie(obs);
+    var inny = stan.przystanek && stan.przystanek !== obs.przystanek;
     el.innerHTML =
+      "<div class='przyst-karty'><span>" + esc(obs.przystanek ? nazwa(obs.przystanek) + " [" + obs.przystanek + "]" : "przystanek nieustawiony") +
+      "</span>" + (inny ? "<button type='button' data-akcja='przyst'>zmie\u0144 na: " + esc(nazwa(stan.przystanek)) + "</button>" : "") + "</div>" +
       "<div class='pola'>" +
       "<label>Linia<input data-pole='linia' value='" + esc(obs.linia) + "' autocomplete='off' autocapitalize='characters'></label>" +
       "<label>Nr taborowy<input data-pole='pojazd' value='" + esc(obs.pojazd) + "' inputmode='numeric' pattern='[0-9]*' autocomplete='off'></label>" +
@@ -119,6 +124,10 @@
     el.querySelector("[data-akcja=cofnij]").addEventListener("click", function () {
       stan.otwarte[i] = P.cofnij(stan.otwarte[i]); zapisz(); rysuj();
     });
+    var zm = el.querySelector("[data-akcja=przyst]");
+    if (zm) zm.addEventListener("click", function () {
+      stan.otwarte[i].przystanek = stan.przystanek; zapisz(); rysuj();
+    });
     el.querySelector("[data-akcja=usun]").addEventListener("click", function () {
       if (confirm("Usunąć tę obserwację?")) { stan.otwarte.splice(i, 1); zapisz(); rysuj(); }
     });
@@ -126,7 +135,9 @@
       var b = P.braki(stan.otwarte[i]);
       if (b.length && !confirm("Brakuje: " + b.join(", ") + ".\nZakończyć mimo to? (trafi do CSV z brakami)")) return;
       var o = stan.otwarte.splice(i, 1)[0];
-      o.zamknieta = true; stan.zamkniete.push(o); zapisz(); rysuj();
+      o.zamknieta = true; stan.zamkniete.push(o);
+      stan.zamkniete.sort(function (a, b) { return a.utworzona - b.utworzona; });   // edytowana wraca na swoje miejsce
+      zapisz(); rysuj();
     });
     return el;
   }
@@ -139,24 +150,41 @@
     var kompletne = stan.zamkniete.filter(function (o) { return !P.braki(o).length; }).length;
     l.innerHTML = "<h2 style='font-size:15px;margin:0'>Zakończone: " + stan.zamkniete.length +
       " (kompletne " + kompletne + ")</h2>" +
-      stan.zamkniete.slice(-8).reverse().map(function (o) {
-        var tr = P.trwanie(o);
-        return "<div class='wiersz'><span>" + esc(o.linia || "?") + " / " + esc(o.pojazd || "?") + " · " + esc(o.przystanek) +
+      stan.zamkniete.map(function (o, k) { return [o, k]; }).reverse().map(function (x) {
+        var o = x[0], tr = P.trwanie(o);
+        return "<button type='button' class='wiersz' data-edytuj='" + x[1] + "'><span><b>" + godz(o.czasy.stop || o.utworzona) + "</b> " +
+               esc(o.linia || "?") + " / " + esc(o.pojazd || "?") + " \u00b7 " + esc(nazwa(o.przystanek)) +
                "</span><span>" + (tr.postoj !== null ? tr.postoj.toFixed(1) + " s" : (o.flagi.przejazd ? "przejazd" : "braki")) +
-               "</span></div>";
+               " \u270e</span></button>";
       }).join("");
+    l.querySelectorAll("[data-edytuj]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var o = stan.zamkniete.splice(Number(b.dataset.edytuj), 1)[0];
+        o.zamknieta = false; stan.otwarte.unshift(o); zapisz(); rysuj();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
   }
 
   // Dwa pliki: postoje (obserwacja = pojazd na przystanku) i przejazdy
   // (wiersz = postoj w trakcie jazdy) - rozne jednostki, rozne kolumny.
   function eksport() {
     var znacznik = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+    // Plik trybu, w ktorym jestes (pilotaz 27.09: udostepnianie dwoch plikow
+    // naraz na telefonie oddawalo tylko pierwszy - przejazdy ginely).
     var pliki = [];
-    var postoje = stan.zamkniete.concat(stan.otwarte);
-    if (postoje.length) pliki.push(new File([P.csv(postoje)], "pomiar_" + znacznik + ".csv", { type: "text/csv" }));
-    var jazdy = stan.przejazdy.concat(stan.przejazd ? [stan.przejazd] : []);
-    if (jazdy.length) pliki.push(new File([P.csvPrzejazdy(jazdy)], "przejazdy_" + znacznik + ".csv", { type: "text/csv" }));
-    if (!pliki.length) { alert("Nic do eksportu."); return; }
+    if (stan.tryb === "jazda") {
+      var jazdy = stan.przejazdy.concat(stan.przejazd ? [stan.przejazd] : []);
+      if (jazdy.some(function (j) { return j.postoje.length; }))
+        pliki.push(new File([P.csvPrzejazdy(jazdy)], "przejazdy_" + znacznik + ".csv", { type: "text/csv" }));
+    } else {
+      var postoje = stan.zamkniete.concat(stan.otwarte);
+      if (postoje.length) pliki.push(new File([P.csv(postoje)], "pomiar_" + znacznik + ".csv", { type: "text/csv" }));
+    }
+    if (!pliki.length) {
+      alert(stan.tryb === "jazda" ? "Brak zapisanych przystank\u00f3w w przejazdach (przycisk \u201eDalej\u201d)." : "Nic do eksportu.");
+      return;
+    }
     if (navigator.canShare && navigator.canShare({ files: pliki })) {
       navigator.share({ files: pliki, title: "pomiar " + znacznik }).catch(function () {});
       return;
@@ -184,16 +212,45 @@
   }
 
   function wybierz(pole, p) {
-    pole.value = P.etykietaPrzystanku(p);
-    stan.przystanekTekst = pole.value; stan.przystanek = p.s; zapisz();
+    ustawBiezacy(p.s);
     document.getElementById("podpowiedzi").hidden = true;
     pole.blur();
+  }
+
+  // Krotka etykieta w polu (bez listy linii) i szybkie przyciski: pozostale
+  // slupki tej nazwy + ostatnio uzywane (pilotaz 27.09: zmiana kierunku na tym
+  // samym przystanku wymagala kasowania dlugiego tekstu).
+  function ustawBiezacy(id) {
+    stan.przystanek = id;
+    stan.przystanekTekst = poId[id] ? nazwa(id) + " [" + id + "]" : id;
+    stan.ostatnie = [id].concat((stan.ostatnie || []).filter(function (x) { return x !== id; })).slice(0, 6);
+    document.getElementById("przystanek").value = stan.przystanekTekst;
+    zapisz(); rysujSzybkie(); rysuj();
+  }
+
+  function rysujSzybkie() {
+    var box = document.getElementById("szybkie");
+    var ids = P.tenSamPrzystanek(wszystkie, stan.przystanek).map(function (p) { return p.s; });
+    (stan.ostatnie || []).forEach(function (id) { if (ids.indexOf(id) < 0 && poId[id]) ids.push(id); });
+    var ja = poId[stan.przystanek];
+    box.innerHTML = ids.slice(0, 8).map(function (id) {
+      var p = poId[id] || { n: id, k: "" };
+      // ta sama nazwa co biezacy - wystarczy kierunek; inna - skrocona nazwa
+      var tekst = ja && p.n === ja.n ? "\u2192 " + (p.k || "koniec") : p.n + (p.k ? " \u2192 " + p.k : "");
+      return "<button type='button' data-szybki='" + esc(id) + "' class='" + (id === stan.przystanek ? "zrobione" : "") + "'>" +
+        esc(tekst) + " <small>" + esc(id) + "</small></button>";
+    }).join("");
+    var akt = box.querySelector(".zrobione");
+    if (akt) box.scrollLeft = Math.max(0, akt.offsetLeft - box.offsetLeft - 16);
+    box.querySelectorAll("[data-szybki]").forEach(function (b) {
+      b.addEventListener("click", function () { ustawBiezacy(b.dataset.szybki); });
+    });
   }
 
   function podpowiedzi(pole, box, wybor) {
     box = box || document.getElementById("podpowiedzi");
     wybor = wybor || wybierz;
-    var wyn = P.szukajPrzystankow(wszystkie, pole.value, 12);
+    var wyn = P.szukajPrzystankow(wszystkie, pole.value, 20);
     box.innerHTML = "";
     if (pole.value.trim().length < 2) { box.hidden = true; return; }
     if (!wyn.length) {
@@ -204,11 +261,15 @@
       b.type = "button";
       b.innerHTML = esc(p.n) + (p.k ? " \u2192 " + esc(p.k) : "") +
         "<small>[" + esc(p.s) + "] " + esc((p.t === "0" ? "tramwaj " : p.t === "3" ? "autobus " : "") + p.l.join(", ")) + "</small>";
-      // pointerdown, nie click: klikniecie zamyka klawiature i lista znika, zanim click dotrze
-      b.addEventListener("pointerdown", function (e) { e.preventDefault(); wybor(pole, p); });
+      // mousedown bez domyslnej akcji - pole nie traci fokusu, lista nie znika;
+      // wybor dopiero na click, ktory przychodzi tylko po stuknieciu, nie po
+      // przewinieciu (pilotaz 27.09: pointerdown wybieral przy probie przewiniecia)
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.addEventListener("click", function () { wybor(pole, p); });
       box.appendChild(b);
     });
     box.hidden = false;
+    box.scrollTop = 0;
   }
 
   /* ---- tryb "jade pojazdem" ---- */
@@ -231,7 +292,7 @@
     if (!j) {
       el.innerHTML = "<button class='glowny-duzy' id='nowy-przejazd' type='button'>Zacznij przejazd</button>" +
         "<p class='drobny'>Wsiadasz do pojazdu: wpisz lini\u0119 i numer taborowy, wybierz kierunek i przystanek, na kt\u00f3rym jeste\u015b. " +
-        "Na ka\u017cdym przystanku licz wsiadaj\u0105cych i wysiadaj\u0105cych, a gdy pojazd rusza \u2014 <b>Odjazd</b>.</p>" +
+        "Na ka\u017cdym przystanku licz wsiadaj\u0105cych i wysiadaj\u0105cych, a gdy sko\u0144czysz (tak\u017ce ju\u017c w trakcie jazdy) \u2014 <b>Dalej</b>.</p>" +
         "<div class='lista' style='margin:0'>" + zrobione + "</div>";
       el.querySelector("#nowy-przejazd").addEventListener("click", function () {
         stan.przejazd = P.nowyPrzejazd(Date.now()); zapisz(); rysujJazde();
@@ -267,12 +328,12 @@
       "<div class='licznik'><span>Wysiada <b>" + b.wysiadlo + "</b></span>" +
       "<button type='button' data-licz='wysiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wysiadlo' data-d='-1'>\u2212</button></div>" +
       "</div>" +
-      "<div class='drobny' style='margin:6px 0 4px'>Zape\u0142nienie po odje\u017adzie</div>" +
+      "<div class='drobny' style='margin:6px 0 4px'>Zape\u0142nienie po odje\u017adzie (mo\u017cna liczy\u0107 i zaznacza\u0107 ju\u017c w trakcie jazdy)</div>" +
       "<div class='tlok'>" + P.TLOK.map(function (x) {
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (b.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
       }).join("") + "</div>" +
       "<div class='przyciski' style='margin-top:10px'>" +
-      "<button type='button' class='zrobione' data-akcja='odjazd'>Odjazd \u25b6</button>" +
+      "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button>" +
       "<button type='button' data-akcja='pomin'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
       "<div class='komunikat'></div>" +
       "<label class='drzwi'>Liczone <select data-pole='zakres'>" + P.ZAKRES.map(function (z) {
@@ -283,7 +344,7 @@
         return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) + "</span><span>+" + p.wsiadlo +
           " \u2212" + p.wysiadlo + (p.tlok ? " \u00b7 " + esc(etTlok(p.tlok)) : "") + "</span></div>";
       }).join("") + "</div>" +
-      "<div class='stopka-karty'><button type='button' data-akcja='cofnij'>Cofnij odjazd</button>" +
+      "<div class='stopka-karty'><button type='button' data-akcja='cofnij'>Cofnij \u201eDalej\u201d</button>" +
       "<button type='button' data-akcja='usun'>Usu\u0144</button>" +
       "<button type='button' class='zakoncz' data-akcja='zakoncz'>Zako\u0144cz przejazd</button></div>" +
       "</article><div class='lista' style='margin:0'>" + zrobione + "</div>";
@@ -322,7 +383,8 @@
     el.querySelectorAll("[data-licz]").forEach(function (bt) {
       bt.addEventListener("click", function () {
         if (navigator.vibrate) navigator.vibrate(15);
-        zmienPrzejazd(function (x) { return P.zliczPrzejazd(x, bt.dataset.licz, Number(bt.dataset.d)); });
+        var t = Date.now();
+        zmienPrzejazd(function (x) { return P.zliczPrzejazd(x, bt.dataset.licz, Number(bt.dataset.d), t); });
       });
     });
     el.querySelectorAll("[data-tlok]").forEach(function (bt) {
@@ -333,12 +395,12 @@
         });
       });
     });
-    el.querySelector("[data-akcja=odjazd]").addEventListener("click", function () {
+    el.querySelector("[data-akcja=dalej]").addEventListener("click", function () {
       var t = Date.now();
-      if (zmienPrzejazd(function (x) { return P.odjazd(x, t); }) && navigator.vibrate) navigator.vibrate(30);
+      if (zmienPrzejazd(function (x) { return P.dalej(x, t); }) && navigator.vibrate) navigator.vibrate(30);
     });
     el.querySelector("[data-akcja=pomin]").addEventListener("click", function () { zmienPrzejazd(P.pomin); });
-    el.querySelector("[data-akcja=cofnij]").addEventListener("click", function () { zmienPrzejazd(P.cofnijOdjazd); });
+    el.querySelector("[data-akcja=cofnij]").addEventListener("click", function () { zmienPrzejazd(P.cofnijDalej); });
     el.querySelector("[data-akcja=usun]").addEventListener("click", function () {
       if (confirm("Usun\u0105\u0107 ten przejazd?")) { stan.przejazd = null; zapisz(); rysujJazde(); }
     });
@@ -355,6 +417,7 @@
     document.getElementById("jazda").hidden = !jazda;
     ["karty", "lista", "nowy"].forEach(function (id) { document.getElementById(id).hidden = jazda; });
     document.querySelector(".pasek-gora .szukaj").hidden = jazda;
+    document.getElementById("szybkie").hidden = jazda;
     document.querySelectorAll("[data-tryb]").forEach(function (b) {
       b.classList.toggle("zrobione", b.dataset.tryb === tryb);
     });
@@ -367,20 +430,25 @@
     var pole = document.getElementById("przystanek");
     fetch("data/przystanki.json", { cache: "no-cache" }).then(function (r) { return r.json(); })
       .then(function (d) {
-        wszystkie = d.przystanki; trasy = d.trasy || {}; indeksuj();
+        wszystkie = d.przystanki; trasy = d.trasy || {}; indeksuj(); rysujSzybkie();
+        if (stan.tryb !== "jazda") rysuj();
         if (document.activeElement === pole) podpowiedzi(pole);
         if (stan.tryb === "jazda") rysujJazde();
       })
       .catch(function () { /* bez sieci zostaje lista z planu proby */ });
     pole.value = stan.przystanekTekst || "";
     pole.addEventListener("input", function () { podpowiedzi(pole); });
-    pole.addEventListener("focus", function () { if (pole.value) podpowiedzi(pole); });
+    // fokus zaznacza cala tresc - wpisywanie od razu zastepuje poprzedni przystanek
+    pole.addEventListener("focus", function () { setTimeout(function () { pole.select(); }, 0); });
     pole.addEventListener("blur", function () {
       setTimeout(function () { document.getElementById("podpowiedzi").hidden = true; }, 150);
     });
     pole.addEventListener("change", function () {
-      stan.przystanekTekst = pole.value; stan.przystanek = P.idZTekstu(pole.value); zapisz();
+      if (pole.value.trim() && P.idZTekstu(pole.value) !== stan.przystanek) {
+        stan.przystanekTekst = pole.value; stan.przystanek = P.idZTekstu(pole.value); zapisz(); rysuj();
+      }
     });
+    rysujSzybkie();
     document.getElementById("nowy").addEventListener("click", function () {
       stan.otwarte.unshift(P.nowa(stan.przystanek, Date.now())); zapisz(); rysuj();
       var pierwsze = document.querySelector("#karty [data-pole=linia]");

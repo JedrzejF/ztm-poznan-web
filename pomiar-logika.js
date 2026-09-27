@@ -38,11 +38,13 @@
     licznik += 1;
     return { id: teraz + "-" + licznik, przystanek: przystanek || "", linia: "", pojazd: "",
              czasy: {}, flagi: {}, uwagi: "", zamknieta: false, utworzona: teraz,
-             wsiadlo: 0, wysiadlo: 0, drzwi_obs: "", tlok: "" };
+             wsiadlo: 0, wysiadlo: 0, drzwi_obs: "wszystkie", tlok: "" };
   }
 
   // Wymiana pasazerska (27.09, prosba autora): liczniki dla OBSERWOWANYCH
   // drzwi (jedna osoba nie policzy 4 drzwi tramwaju) i zapelnienie w 3 klasach.
+  // Domyslnie "wszystkie" (27.09, po pilotazu: autor liczy wszystkie, jesli nie
+  // zaznaczy inaczej) - pusty wybor zostaje brakiem tylko przy jawnym skasowaniu.
   // "scisk" (27.09): z wnetrza pojazdu widac tez tlok, ktorego z peronu nie ocenisz.
   var TLOK = [["luzno", "lu\u017ano"], ["siedzenia", "siedzenia zaj\u0119te"], ["stoja", "stoj\u0105"],
               ["scisk", "\u015bcisk"]];
@@ -154,14 +156,18 @@
      Przystanek biezacy podpowiada trasa linii (wariant glowny kierunku,
      opoznienia.trasy); moment "Odjazd" zapisuje postoj z czasem telefonu -
      z numerem taborowym wystarcza do dopasowania z GPS, nawet gdy przystanek
-     wybrano zle. Zapelnienie dotyczy odcinka PO odjezdzie z przystanku. */
+     wybrano zle. Zapelnienie dotyczy odcinka PO odjezdzie z przystanku.
+     Pilotaz 27.09: liczenie trwa czesto jeszcze w trakcie jazdy, wiec moment
+     "Dalej" to NIE odjazd - zapisujemy t_zapis (dotkniecie "Dalej") i
+     t_pierwsze (pierwsze dotkniecie licznika na tym przystanku); do GPS
+     dopasowuje przede wszystkim przystanek i kolejnosc, czasy tylko zawezaja. */
   var ZAKRES = [["", "\u2014"], ["drzwi", "moje drzwi"], ["czlon", "m\u00f3j cz\u0142on / wagon"],
                 ["caly", "ca\u0142y pojazd"]];
 
   function nowyPrzejazd(teraz) {
     licznik += 1;
     return { id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
-             zakres: "", uwagi: "", postoje: [], utworzona: teraz,
+             zakres: "caly", uwagi: "", postoje: [], utworzona: teraz,
              biezacy: { przystanek: "", wsiadlo: 0, wysiadlo: 0, tlok: "" } };
   }
 
@@ -179,8 +185,10 @@
     return Object.assign({}, prz, { biezacy: Object.assign({}, prz.biezacy, { przystanek: id }) });
   }
 
-  function zliczPrzejazd(prz, pole, delta) {
-    return Object.assign({}, prz, { biezacy: zlicz(prz.biezacy, pole, delta) });
+  function zliczPrzejazd(prz, pole, delta, t) {
+    var b = zlicz(prz.biezacy, pole, delta);
+    if (b.t0 === undefined && delta > 0 && t !== undefined) b.t0 = t;
+    return Object.assign({}, prz, { biezacy: b });
   }
 
   /* Nastepny przystanek na trasie po `id`; "" gdy koniec trasy albo `id`
@@ -190,12 +198,12 @@
     return i >= 0 && i + 1 < trasa.length ? trasa[i + 1] : "";
   }
 
-  /* Odjazd z biezacego przystanku: postoj zapisany z czasem t, biezacy
-     przesuwa sie na nastepny przystanek trasy. */
-  function odjazd(prz, t) {
+  /* "Dalej": postoj zapisany z czasem t, biezacy przesuwa sie na nastepny
+     przystanek trasy. */
+  function dalej(prz, t) {
     if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
     var ost = prz.postoje[prz.postoje.length - 1];
-    if (ost && ost.t > t) throw new Error("czas wcze\u015bniejszy ni\u017c poprzedni odjazd");
+    if (ost && ost.t > t) throw new Error("czas wcze\u015bniejszy ni\u017c poprzedni zapis");
     var p = Object.assign({}, prz.biezacy, { t: t });
     return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
                                     biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
@@ -206,8 +214,8 @@
     return ustawPrzystanek(prz, nastepny(prz.trasa, prz.biezacy.przystanek));
   }
 
-  /* Cofniecie ostatniego odjazdu: postoj wraca do edycji z licznikami. */
-  function cofnijOdjazd(prz) {
+  /* Cofniecie ostatniego "Dalej": postoj wraca do edycji z licznikami. */
+  function cofnijDalej(prz) {
     if (!prz.postoje.length) return prz;
     var p = Object.assign({}, prz.postoje[prz.postoje.length - 1]); delete p.t;
     return Object.assign({}, prz, { postoje: prz.postoje.slice(0, -1), biezacy: p });
@@ -217,10 +225,20 @@
     var b = [];
     if (!prz.linia) b.push("linia");
     if (!/^\d{3,4}$/.test(prz.pojazd)) b.push("numer taborowy (3\u20134 cyfry)");
-    if (!prz.postoje.length) b.push("\u017caden odjazd");
+    if (!prz.postoje.length) b.push("\u017caden zapisany przystanek");
     var liczono = prz.postoje.some(function (p) { return p.wsiadlo || p.wysiadlo; });
     if (liczono && !prz.zakres) b.push("zakres liczenia");
     return b;
+  }
+
+  /* Inne slupki o tej samej nazwie - szybka zmiana kierunku na tym samym
+     przystanku (pilotaz 27.09: tramwaje na zmiane w obu kierunkach). */
+  function tenSamPrzystanek(lista, id) {
+    var ja = null;
+    lista.forEach(function (p) { if (p.s === id) ja = p; });
+    if (!ja) return [];
+    return lista.filter(function (p) { return p.n === ja.n; })
+      .sort(function (a, b) { return (a.k || "").localeCompare(b.k || "", "pl") || a.s.localeCompare(b.s); });
   }
 
   function csvPole(v) {
@@ -246,14 +264,14 @@
   }
 
   var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
-                           "t_odjazd", "wsiadlo", "wysiadlo", "tlok", "uwagi"];
+                           "t_pierwsze", "t_zapis", "wsiadlo", "wysiadlo", "tlok", "uwagi"];
 
-  /* CSV przejazdow: wiersz = postoj (format dlugi), czas odjazdu w ms od epoki. */
+  /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
     var w = [KOLUMNY_PRZEJAZDU.join(",")];
     lista.forEach(function (j) {
       j.postoje.forEach(function (p, k) {
-        w.push([j.id, j.linia, j.pojazd, j.kierunek, j.cel, j.zakres, k + 1, p.przystanek, p.t,
+        w.push([j.id, j.linia, j.pojazd, j.kierunek, j.cel, j.zakres, k + 1, p.przystanek, p.t0, p.t,
                 p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", j.uwagi].map(csvPole).join(","));
       });
     });
@@ -262,7 +280,8 @@
 
   return { ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
-           nastepny: nastepny, odjazd: odjazd, pomin: pomin, cofnijOdjazd: cofnijOdjazd,
+           nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
+           tenSamPrzystanek: tenSamPrzystanek,
            brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,
            ZDARZENIA: ZDARZENIA, KODY: KODY, FLAGI: FLAGI, KOLUMNY: KOLUMNY, TLOK: TLOK,
            etykietaPrzystanku: etykietaPrzystanku, idZTekstu: idZTekstu,

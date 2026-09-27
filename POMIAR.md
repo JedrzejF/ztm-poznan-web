@@ -30,7 +30,7 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
 | przycisk | kiedy | uwagi |
 |---|---|---|
 | **Stanął** | koła całkowicie się zatrzymały **przy peronie** | jeśli najpierw stał w kolejce przed peronem, zaznacz „kolejka” i naciśnij dopiero przy peronie |
-| **Drzwi otwarte** | pierwsze drzwi **zaczynają** się otwierać | |
+| **Drzwi otwarte** | pierwsze drzwi **zaczynają** się otwierać | nie koniec otwierania — ten moment trudniej wskazać przy kilku drzwiach (pilotaż 27.09 zapisany wg końca otwierania, oznaczony w `data/static/teren/README.md`) |
 | **Drzwi zamknięte** | ostatnie drzwi **domknięte** | |
 | **Ruszył** | koła ruszyły, pojazd zaczyna odjeżdżać | nie moment domknięcia drzwi |
 | **Stanął ponownie** | po ruszeniu staje jeszcze raz w obrębie przystanku (światło, do ~50 m) | tylko jeśli się zdarzy |
@@ -54,6 +54,9 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
 3. **Drzwi otwarte** — przy pierwszym ruchu skrzydła dowolnych drzwi.
 4. **W trakcie postoju** (zwykle 15–40 s): wpisz linię i numer taborowy,
    a jeśli liczysz pasażerów — naciskaj **+** przy każdej osobie (niżej).
+   Przystanek przypisany do pojazdu widać na górze karty (ten, który był
+   wybrany przy **+ Pojazd**); gdy zmienisz przystanek, karta pokaże
+   przycisk „zmień na: …”.
    Wpisywanie nie wpływa na zapisane czasy.
 5. **Drzwi zamknięte** — gdy ostatnie skrzydło się domknie. W tramwaju
    z kilkoma drzwiami patrz na te, które zamykają się ostatnie — którymi
@@ -71,6 +74,13 @@ jeden, drugi pomiń (lepiej mniej, a pewnie).
 **Pomyłka:** „Cofnij” usuwa ostatnio zapisany moment. Zła kolejność
 (np. „Stanął” po „Ruszył”) zostanie zablokowana z komunikatem.
 
+**Poprawki po fakcie:** lista „Zakończone” pokazuje godzinę, linię, pojazd
+i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
+
+**Zmiana kierunku na tym samym przystanku:** pod polem przystanku jest
+rząd szybkich przycisków — pozostałe słupki tej nazwy („→ Szwedzka 215”)
+i ostatnio używane. Jedno stuknięcie zamiast wpisywania.
+
 ## Wymiana pasażerska (opcjonalnie)
 
 Pozwoli skorelować postój z liczbą wsiadających i wysiadających.
@@ -79,8 +89,8 @@ i „Ruszył”, nie licz.
 
 - **Licz jedne, zawsze te same drzwi** — w tramwaju pierwsze (przy
   motorniczym) albo te najbliżej wejścia na przystanek; w krótkim autobusie
-  można wszystkie. Wybierz je w polu **Liczone drzwi** — bez tego liczby są
-  bezużyteczne (notatnik przypomni).
+  można wszystkie. Pole **Liczone drzwi** ma domyślnie „wszystkie” — zmień
+  je, jeśli liczysz tylko część.
 - **+** przy każdej osobie wsiadającej / wysiadającej przez te drzwi;
   **−** poprawia pomyłkę.
 - **Zapełnienie** jednym dotknięciem: luźno / siedzenia zajęte / stoją.
@@ -119,21 +129,23 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    drzwiami albo przy kabinie), kierunek (przyciski „→ cel” z rozkładu).
 2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
    notatnik sam przechodzi na kolejny. Objazd → pole „inny”, wyszukiwarka.
-3. **Liczone**: moje drzwi / mój człon (wagon) / cały pojazd — raz na
-   przejazd, zawsze to samo. Bez tego liczby są bezużyteczne.
+3. **Liczone**: moje drzwi / mój człon (wagon) / cały pojazd (domyślnie) —
+   raz na przejazd, zawsze to samo.
 4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej,
    potem **zapełnienie po odjeździe** (luźno / siedzenia zajęte / stoją / ścisk).
-5. Pojazd rusza → **Odjazd ▶**. Zapisuje postój z czasem telefonu, liczniki
-   od zera, przystanek przechodzi na następny.
+5. Skończyłeś liczyć (także już w trakcie jazdy) → **Dalej ▶**. Liczniki od
+   zera, przystanek przechodzi na następny. To **nie** jest moment odjazdu —
+   zapisuje się czas pierwszego „+” na przystanku i czas „Dalej”.
 6. Przystanek na żądanie, pojazd nie stanął → **Nie stanął** (przejście
-   dalej bez zapisu). Pomyłka → **Cofnij odjazd** (postój wraca do edycji).
+   dalej bez zapisu). Pomyłka → **Cofnij „Dalej”** (postój wraca do edycji).
 7. Wysiadasz → **Zakończ przejazd**.
 
-Czas „Odjazd” + numer taborowy wystarczą do dopasowania z GPS, więc źle
-wybrany przystanek da się naprawić w analizie. Eksport daje drugi plik,
-`przejazdy_*.csv` — wiersz na postój: `id, linia, pojazd, kierunek, cel,
-zakres, lp, przystanek, t_odjazd, wsiadlo, wysiadlo, tlok, uwagi`
-(`t_odjazd` w ms od epoki, UTC). Trasy w notatniku to wariant główny kierunku z aktualnego
+Do GPS dopasowuje przede wszystkim przystanek i kolejność; czasy tylko
+zawężają okno. **Eksport CSV w trybie „Jadę pojazdem”** daje plik
+`przejazdy_*.csv` (w trybie „Na przystanku” — `pomiar_*.csv`; osobno, bo
+udostępnianie dwóch plików naraz w telefonie oddawało tylko pierwszy).
+Wiersz na postój: `id, linia, pojazd, kierunek, cel, zakres, lp, przystanek,
+t_pierwsze, t_zapis, wsiadlo, wysiadlo, tlok, uwagi` (czasy w ms od epoki, UTC). Trasy w notatniku to wariant główny kierunku z aktualnego
 rozkładu (ten sam co w tabeli punktualności); kursy skrócone kończą się
 wcześniej — wtedy po prostu **Zakończ**.
 
