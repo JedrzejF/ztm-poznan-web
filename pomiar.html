@@ -99,6 +99,15 @@
   .korekta span { flex-basis: 100%; }
   .korekta button { flex: 1; min-height: 44px; font: 600 15px system-ui, sans-serif; border-radius: 8px;
                     border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
+  .zegar-jazdy { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 40px; gap: 4px; margin: 8px 0; }
+  .zegar-jazdy button { min-height: 50px; font: 600 12px/1.15 system-ui, sans-serif; border-radius: 8px; padding: 4px 2px;
+                        border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
+  .zegar-jazdy button small { display: block; font: 500 10px/1.2 ui-monospace, Menlo, monospace; color: var(--tekst-2); margin-top: 2px; }
+  .zegar-jazdy button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  .zegar-jazdy button.zrobione small { color: #fff; }
+  .obc-wiersz { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; margin-top: 10px; }
+  .obc-wiersz .obciazenie input { width: 100%; }
+  .obc-wiersz .drzwi select { width: 100%; }
   .obciazenie { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--tekst-2); margin-top: 10px; }
   .obciazenie input { font: 600 18px system-ui, sans-serif; padding: 8px 10px; border-radius: 8px; width: 9em;
                       border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
@@ -152,7 +161,7 @@
   <button id="wyczysc" type="button">Wyczyść</button>
 </div>
 
-<script src="pomiar-logika.js?v=75f00fb0bb"></script>
-<script src="pomiar.js?v=6eed1b4041"></script>
+<script src="pomiar-logika.js?v=dedadbc3bf"></script>
+<script src="pomiar.js?v=5b131d5c00"></script>
 </body>
 </html>

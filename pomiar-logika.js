@@ -188,11 +188,12 @@
     licznik += 1;
     return { id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
              zakres: "caly", uwagi: "", postoje: [], utworzona: teraz,
-             biezacy: { przystanek: "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "" } };
+             biezacy: _pusty("") };
   }
 
   function _pusty(przystanek) {
-    return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "", znaczniki: {}, uwaga: "" };
+    return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "",
+             obciazenie_zakres: "", znaczniki: {}, uwaga: "", czasy: {} };
   }
 
   /* Znaczniki postoju w trakcie jazdy (27.09: notatki "Krzesiny 170 s czekania
@@ -204,8 +205,12 @@
 
   function przelaczZnacznik(prz, kod, t) {
     var b = Object.assign({}, prz.biezacy), z = Object.assign({}, b.znaczniki || {});
-    var x = z[kod];
-    if (!x) z[kod] = { od: t };
+    var x = z[kod], c = b.czasy || {};
+    // swiatlo za przystankiem: liczacy orientuje sie po kilku sekundach -
+    // gdy zapisano "Drzwi zamkniete", start od nich (i koniec na "Ruszyl")
+    if (!x && kod === "za" && c.zamk !== undefined)
+      z[kod] = c.rusz !== undefined ? { od: c.zamk, do: Math.max(c.rusz, c.zamk) } : { od: c.zamk };
+    else if (!x) z[kod] = { od: t };
     else if (x.do === undefined) z[kod] = { od: x.od, do: Math.max(t, x.od) };
     else delete z[kod];
     b.znaczniki = z;
@@ -223,11 +228,20 @@
      wpisana recznie gdziekolwiek (przy wejsciu albo pozniej) jest kotwica,
      dalej szacunek = kotwica + suma (wsiadlo - wysiadlo) kolejnych postojow.
      Przed pierwsza kotwica szacunku nie ma - liczby wsteczne bylyby zgadywane. */
-  function szacujObciazenie(postoje) {
+  /* 28.09: liczba osob moze dotyczyc innego zakresu niz liczniki (liczysz
+     czlon, ale raz policzyles caly pojazd). Kotwica prowadzi bilans tylko,
+     gdy jej zakres = zakres licznikow; inna kotwica przerywa szacunek (liczby
+     z dwoch zakresow sie nie sumuja). zakres pominiety - jak wczesniej. */
+  function zakresObciazenia(p, zakres) {
+    return p.obciazenie_zakres || (zakres === "czlon" ? "czlon" : "caly");
+  }
+
+  function szacujObciazenie(postoje, zakres) {
     var wynik = [], biez = null;
     postoje.forEach(function (p) {
-      if (p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null) biez = Number(p.obciazenie);
-      else if (biez !== null) biez = Math.max(0, biez + (p.wsiadlo || 0) - (p.wysiadlo || 0));
+      if (p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null) {
+        biez = zakres === undefined || zakresObciazenia(p, zakres) === zakres ? Number(p.obciazenie) : null;
+      } else if (biez !== null) biez = Math.max(0, biez + (p.wsiadlo || 0) - (p.wysiadlo || 0));
       wynik.push(biez);
     });
     return wynik;
@@ -267,6 +281,34 @@
     var p = Object.assign({}, prz.biezacy, { t: t });
     return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
                                     biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
+  }
+
+  /* Zegar postoju w jezdzie (28.09, opcjonalny): Stanal / Drzwi otwarte /
+     Drzwi zamkniete / Ruszyl dla biezacego przystanku, kolejnosc jak na
+     przystanku. "Stanal", gdy biezacy juz ruszyl = to jest nastepny przystanek:
+     najpierw "Dalej" (zapis z ta chwila), potem zdarzenie - dane trafiaja do
+     wlasciwego przystanku, nawet gdy liczacy nie zdazyl nacisnac "Dalej".
+     "Ruszyl" konczy trwajace znaczniki. */
+  var ZDARZENIA_JAZDY = ["stop", "otw", "zamk", "rusz"];
+
+  function zdarzenieJazdy(prz, kod, t) {
+    if (ZDARZENIA_JAZDY.indexOf(kod) < 0) throw new Error("nieznane zdarzenie: " + kod);
+    var x = prz;
+    if (kod === "stop" && (x.biezacy.czasy || {}).rusz !== undefined) x = dalej(x, t);
+    var b = zapisz(Object.assign({ czasy: {} }, x.biezacy), kod, t);
+    if (kod === "rusz") {
+      var z = {};
+      Object.keys(b.znaczniki || {}).forEach(function (k) {
+        var m = b.znaczniki[k];
+        z[k] = m.do === undefined ? { od: m.od, do: Math.max(t, m.od) } : m;
+      });
+      b = Object.assign({}, b, { znaczniki: z });
+    }
+    return Object.assign({}, x, { biezacy: b });
+  }
+
+  function cofnijZdarzenieJazdy(prz) {
+    return Object.assign({}, prz, { biezacy: cofnij(Object.assign({ czasy: {} }, prz.biezacy)) });
   }
 
   /* Przystanek bez zatrzymania (na zadanie) - przesuniecie bez zapisu. */
@@ -324,17 +366,21 @@
   }
 
   var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
-                           "t_pierwsze", "t_zapis", "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_szac"]
+                           "t_pierwsze", "t_zapis", "t_stop", "t_otw", "t_zamk", "t_rusz",
+                           "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_zakres", "obciazenie_szac"]
     .concat(ZNACZNIKI.map(function (z) { return "z_" + z[0] + "_s"; })).concat(["uwaga_przyst", "uwagi"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
     var w = [KOLUMNY_PRZEJAZDU.join(",")];
     lista.forEach(function (j) {
-      var sz = szacujObciazenie(j.postoje);
+      var sz = szacujObciazenie(j.postoje, j.zakres);
       j.postoje.forEach(function (p, k) {
+        var c = p.czasy || {}, obc = p.obciazenie === undefined ? "" : p.obciazenie;
         w.push([j.id, j.linia, j.pojazd, j.kierunek, j.cel, j.zakres, k + 1, p.przystanek, p.t0, p.t,
-                p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", p.obciazenie === undefined ? "" : p.obciazenie,
+                c.stop, c.otw, c.zamk, c.rusz,
+                p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", obc,
+                obc === "" ? "" : zakresObciazenia(p, j.zakres),
                 sz[k] === null ? "" : sz[k]]
           .concat(ZNACZNIKI.map(function (z) { var d = trwanieZnacznika((p.znaczniki || {})[z[0]], p.t); return d === null ? "" : d; }))
           .concat([p.uwaga || "", j.uwagi]).map(csvPole).join(","));
@@ -347,6 +393,8 @@
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
            tenSamPrzystanek: tenSamPrzystanek, szacujObciazenie: szacujObciazenie,
+           zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,
+           zdarzenieJazdy: zdarzenieJazdy, cofnijZdarzenieJazdy: cofnijZdarzenieJazdy,
            ZNACZNIKI: ZNACZNIKI, przelaczZnacznik: przelaczZnacznik, trwanieZnacznika: trwanieZnacznika,
            przesun: przesun, opisKorekt: opisKorekt,
            brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,

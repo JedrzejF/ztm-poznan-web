@@ -332,9 +332,11 @@
     var kier = trasy[j.linia] || {};
     var b = j.biezacy;
     // szacunek dla biezacego przystanku: ostatnia znana liczba + bilans licznikow
-    var sz = P.szacujObciazenie(j.postoje.concat([Object.assign({}, b, { obciazenie: "" })]));
+    var sz = P.szacujObciazenie(j.postoje.concat([Object.assign({}, b, { obciazenie: "" })]), j.zakres);
     var szTu = sz[sz.length - 1];
-    var szPost = P.szacujObciazenie(j.postoje);
+    var szPost = P.szacujObciazenie(j.postoje, j.zakres);
+    var zObc = P.zakresObciazenia(b, j.zakres);
+    var cz = b.czasy || {};
     var trasa = j.trasa || [];
     el.innerHTML =
       "<article class='karta'>" +
@@ -352,19 +354,40 @@
           return "<option value='" + esc(id) + "'" + (id === b.przystanek ? " selected" : "") + ">" + esc(nazwa(id)) + "</option>";
         }).join("") + "</select>"
         : "<b>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014") + "</b>") +
-      "<div class='szukaj'><input data-szukaj type='search' placeholder='" + (trasa.length ? "inny (objazd) \u2014 wpisz nazw\u0119" : "wpisz nazw\u0119 przystanku") +
-        "' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' enterkeyhint='done'>" +
-        "<div class='podpowiedzi' data-podp hidden></div></div></div>" +
+      // wyszukiwarka tylko bez trasy linii (28.09: objazd poza trasa - zbyt rzadki)
+      (trasa.length ? "" : "<div class='szukaj'><input data-szukaj type='search' placeholder='wpisz nazw\u0119 przystanku'" +
+        " autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' enterkeyhint='done'>" +
+        "<div class='podpowiedzi' data-podp hidden></div></div>") + "</div>" +
+      // 2. zegar postoju (opcjonalny) - zdarzenia trafiaja do biezacego przystanku
+      "<div class='zegar-jazdy'>" + P.ZDARZENIA_JAZDY.map(function (k) {
+        var z = P.ZDARZENIA.filter(function (x) { return x.kod === k; })[0];
+        return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + "'>" +
+          esc(z.etykieta) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "opcjonalnie") + "</small></button>";
+      }).join("") + "<button type='button' class='cofnij-zj' data-akcja='cofnij-zj' title='cofnij ostatnie zdarzenie'>\u21b6</button></div>" +
       "<div class='pasazerowie'>" +
       "<div class='licznik'><span>Wsiada <b>" + b.wsiadlo + "</b></span>" +
       "<button type='button' data-licz='wsiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wsiadlo' data-d='-1'>\u2212</button></div>" +
       "<div class='licznik'><span>Wysiada <b>" + b.wysiadlo + "</b></span>" +
       "<button type='button' data-licz='wysiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wysiadlo' data-d='-1'>\u2212</button></div>" +
       "</div>" +
-      "<div class='drobny' style='margin:6px 0 4px'>Zape\u0142nienie po odje\u017adzie (mo\u017cna liczy\u0107 i zaznacza\u0107 ju\u017c w trakcie jazdy)</div>" +
+      // 3. liczba osob obok zakresu liczenia, zakres liczby domyslnie jak licznikow
+      "<div class='obc-wiersz'>" +
+      "<label class='obciazenie'>W pojeździe po odjeździe" +
+      "<input data-obc type='number' inputmode='numeric' min='0' value='" + esc(b.obciazenie === undefined ? "" : b.obciazenie) +
+      "' placeholder='" + (szTu === null ? "np. 23" : "\u2248 " + szTu) + "'></label>" +
+      "<label class='drzwi'>Liczone <select data-pole='zakres'>" + P.ZAKRES.map(function (z) {
+        return "<option value='" + z[0] + "'" + (j.zakres === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
+      }).join("") + "</select></label>" +
+      "<label class='drzwi'>ta liczba to <select data-obc-zakres>" +
+        [["czlon", "m\u00f3j cz\u0142on"], ["caly", "ca\u0142y pojazd"]].map(function (z) {
+          return "<option value='" + z[0] + "'" + (zObc === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
+        }).join("") + "</select></label></div>" +
+
+      // 4. zapelnienie - tylko gdy nie liczysz osob (28.09)
+      "<details" + (b.tlok ? " open" : "") + "><summary>Zape\u0142nienie (gdy nie liczysz os\u00f3b)</summary>" +
       "<div class='tlok'>" + P.TLOK.map(function (x) {
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (b.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
-      }).join("") + "</div>" +
+      }).join("") + "</div></details>" +
       "<div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
         var x = (b.znaczniki || {})[z[0]];
         var kl = !x ? "" : x.do === undefined ? "trwa" : "zrobione";
@@ -372,16 +395,11 @@
           "<small data-znak-czas='" + z[0] + "'>" + opisZnacznika(x) + "</small></button>";
       }).join("") + "</div>" +
       "<input class='uwaga-przyst' data-uwaga type='text' placeholder='notatka do tego przystanku' value='" + esc(b.uwaga || "") + "'>" +
-      "<label class='obciazenie'>W pojeździe po odjeździe <small>(opcjonalnie; potem liczy się samo)</small>" +
-      "<input data-obc type='number' inputmode='numeric' min='0' value='" + esc(b.obciazenie === undefined ? "" : b.obciazenie) +
-      "' placeholder='" + (szTu === null ? "np. 23" : "\u2248 " + szTu) + "'></label>" +
+
       "<div class='przyciski' style='margin-top:10px'>" +
       "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button>" +
       "<button type='button' data-akcja='pomin'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
       "<div class='komunikat'></div>" +
-      "<label class='drzwi'>Liczone <select data-pole='zakres'>" + P.ZAKRES.map(function (z) {
-        return "<option value='" + z[0] + "'" + (j.zakres === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
-      }).join("") + "</select></label>" +
       "<details><summary>Uwagi</summary><input type='text' data-pole='uwagi' value='" + esc(j.uwagi) + "'></details>" +
       "<div class='lista' style='margin:10px 0 0'>" + j.postoje.map(function (p, k) { return [p, szPost[k]]; }).slice(-6).reverse().map(function (x) {
         var p = x[0], o = x[1];
@@ -402,6 +420,7 @@
       var ev = inp.tagName === "SELECT" ? "change" : "input";
       inp.addEventListener(ev, function () {
         stan.przejazd[inp.dataset.pole] = inp.value.trim(); zapisz();
+        if (inp.dataset.pole === "zakres") rysujJazde();     // domyslny zakres liczby osob i szacunek
       });
     });
     // linia zmienia liste kierunkow - przerysuj po zejsciu z pola, nie w trakcie pisania
@@ -440,9 +459,28 @@
       zmienPrzejazd(function (x) { return P.ustawPrzystanek(x, sel.value); });
     });
     var sz = el.querySelector("[data-szukaj]"), box = el.querySelector("[data-podp]");
-    var wyborJazda = function (pole, p) { zmienPrzejazd(function (x) { return P.ustawPrzystanek(x, p.s); }); };
-    sz.addEventListener("input", function () { podpowiedzi(sz, box, wyborJazda); });
-    sz.addEventListener("blur", function () { setTimeout(function () { box.hidden = true; }, 150); });
+    if (sz) {
+      var wyborJazda = function (pole, p) { zmienPrzejazd(function (x) { return P.ustawPrzystanek(x, p.s); }); };
+      sz.addEventListener("input", function () { podpowiedzi(sz, box, wyborJazda); });
+      sz.addEventListener("blur", function () { setTimeout(function () { box.hidden = true; }, 150); });
+    }
+    el.querySelectorAll("[data-zj]").forEach(function (bt) {
+      bt.addEventListener("click", function () {
+        var t = Date.now();                              // moment dotkniecia - przed czymkolwiek
+        if (zmienPrzejazd(function (x) { return P.zdarzenieJazdy(x, bt.dataset.zj, t); }) && navigator.vibrate)
+          navigator.vibrate(30);
+      });
+    });
+    el.querySelector("[data-akcja=cofnij-zj]").addEventListener("click", function () {
+      zmienPrzejazd(P.cofnijZdarzenieJazdy);
+    });
+    el.querySelector("[data-obc-zakres]").addEventListener("change", function (ev) {
+      var v = ev.target.value;
+      zmienPrzejazd(function (x) {
+        return Object.assign({}, x, { biezacy: Object.assign({}, x.biezacy,
+          { obciazenie_zakres: v === P.zakresObciazenia({}, x.zakres) ? "" : v }) });
+      });
+    });
     el.querySelectorAll("[data-licz]").forEach(function (bt) {
       bt.addEventListener("click", function () {
         if (navigator.vibrate) navigator.vibrate(15);

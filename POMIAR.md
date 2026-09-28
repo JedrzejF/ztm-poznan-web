@@ -131,17 +131,29 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 1. **Zacznij przejazd** → linia, numer taborowy (w środku: naklejka nad
    drzwiami albo przy kabinie), kierunek (przyciski „→ cel” z rozkładu).
 2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
-   notatnik sam przechodzi na kolejny. Objazd → pole „inny”, wyszukiwarka.
-3. **Liczone**: moje drzwi / mój człon (wagon) / cały pojazd (domyślnie) —
-   raz na przejazd, zawsze to samo.
-4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej,
-   potem **zapełnienie po odjeździe** (luźno / siedzenia zajęte / stoją / ścisk).
+   notatnik sam przechodzi na kolejny. (Wyszukiwarka tylko, gdy linii nie ma
+   w danych — objazd poza trasą jest zbyt rzadki, 28.09.)
+   **Zegar postoju (opcjonalnie):** Stanął / Drzwi otwarte / Drzwi zamknięte /
+   Ruszył — jak na przystanku, zapisuje się do bieżącego przystanku. „Stanął”,
+   gdy bieżący już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego
+   przystanku, nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie.
+3. **Liczone** (obok „W pojeździe po odjeździe”): moje drzwi / mój człon
+   (wagon) / cały pojazd (domyślnie) — raz na przejazd, zawsze to samo.
+   Liczba osób w pojeździe ma domyślnie ten sam zakres („ta liczba to”);
+   można ją zmienić na przystanku, np. raz policzyć cały pojazd. Szacunek
+   ciągnie się tylko od liczby z tym samym zakresem co liczniki.
+4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej.
+   **Zapełnienie** (luźno / siedzenia / stoją / ścisk) jest zwinięte — tylko
+   gdy nie liczysz osób; przy liczbie osób nic nie dodaje (28.09).
    **Znaczniki** (każdy mierzy czas — 1. dotknięcie start, 2. koniec,
    3. kasuje; bez końca trwa do „Dalej”):
    - **czeka na czas** — kierowca przetrzymuje pojazd (przyjechał za
      wcześnie), drzwi otwarte lub zamknięte, bez wymiany;
    - **korek / światło przed peronem** — stoi przed wjazdem na przystanek;
    - **światło za przystankiem** — po zamknięciu drzwi czeka na zielone.
+     Zwykle orientujesz się po kilku sekundach — jeśli zapisałeś „Drzwi
+     zamknięte”, znacznik liczy się od nich (i kończy na „Ruszył”), więc można
+     go nacisnąć po fakcie. Bez zegara postoju — od dotknięcia, zaniżony.
 
    **Notatka do tego przystanku** — krótki tekst przypięty do przystanku
    (np. „dobiegł pasażer”), zamiast uwag do całego przejazdu.
