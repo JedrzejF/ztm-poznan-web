@@ -1,4 +1,6 @@
 /* plan.js - plan dnia pomiarow terenowych: tabela z filtrem po osobie.
+ * Sama (bez drugiej osoby) W. jezdzi tylko autobusami; tramwajem wolno 9/11
+ * na odcinku Piatkowska - Most Teatralny (ruch do ogarniecia w pojedynke).
  * Uzywany przez notatnik (pomiar.html, przycisk "Plan dnia") i przez
  * plan-dnia.html. Godziny z rozkladu ZTM (wersja 24.09, z objazdami). */
 (function () {
@@ -13,15 +15,16 @@
       ["14:06", "14:15", "W.+G.", "Tramwaj 8: Fredry 118 → Żeromskiego 61", "jazda", "oboje zegar; zapas 14:16"],
       ["14:15", "14:35", "W.+G.", "Żeromskiego 61 → Ogrody (bez świateł)", "przystanek", "razem; dwa pojazdy naraz: W. przedni, G. tylny"],
       ["14:40", "15:05", "W.+G.", "Żeromskiego 60 (światło 3 m)", "przystanek", "jak wyżej; potem wróćcie na 61"],
-      ["15:13", "15:40", "W.+G.", "Autobus 193: Żeromskiego 61 → Os. Kopernika 1061", "jazda", "oboje zegar; 14 przystanków przez Swobodę; zapas 15:28"],
-      ["15:40", "15:58", "W.+G.", "Os. Kopernika 1061 → Trębacka", "przystanek", "~21 pojazdów/h"],
-      ["15:58", "16:17", "W.", "Autobus 145: Os. Kopernika 1061 → Rondo Nowaka-Jeziorańskiego 71", "jazda", "8 przystanków; zapas 16:18"],
-      ["15:58", "16:25", "G.", "Os. Kopernika 1061 / 1062", "przystanek", "sam; ~21 pojazdów/h na stronę"],
-      ["16:20", "17:05", "W.", "Rondo Nowaka-Jeziorańskiego 70 → Ostroroga", "przystanek", "tramwaje 1, 6, 13, 15; ~24/h"],
+      ["15:13", "15:19", "W.+G.", "Autobus 193: Żeromskiego 61 → Swoboda", "jazda", "oboje zegar; W. wysiada na Swobodzie, G. jedzie dalej"],
+      ["15:19", "15:33", "W.", "Swoboda 628 → Bułgarska/Polska", "przystanek", "~20 autobusów/h"],
+      ["15:19", "15:40", "G.", "Autobus 193 dalej: Swoboda → Os. Kopernika 1061", "jazda", "10 przystanków"],
+      ["15:33", "15:59", "W.", "Autobus 177: Swoboda 628 → Junikowo", "jazda", "18 przystanków; zapas 16:03"],
+      ["15:40", "16:25", "G.", "Os. Kopernika 1061 / 1062", "przystanek", "~21 pojazdów/h na stronę"],
+      ["16:11", "16:33", "W.", "Autobus 177: Junikowo → Swoboda 629", "jazda", "18 przystanków; zapas 16:41 → 17:03"],
       ["16:27", "17:16", "G.", "Autobus 164: Os. Kopernika 1061 → Puszkina", "jazda", "27 przystanków przez Jeżyce; zapas 16:42"],
-      ["17:09", "17:13", "W.", "Tramwaj 7: Rondo Nowaka-Jeziorańskiego 69 → Żeromskiego", "jazda", ""],
-      ["17:16", "", "G.", "Powrót — do ustalenia", "", ""],
-      ["17:19", "17:55", "W.", "Autobus 191: Żeromskiego → Os. Sobieskiego", "jazda", "27 przystanków; wcześniejszy kurs 17:04"]
+      ["16:33", "17:13", "W.", "Swoboda 629 → Szpitalna", "przystanek", "~20 autobusów/h"],
+      ["17:13", "17:55", "W.", "Autobus 191: Swoboda 629 → Os. Sobieskiego", "jazda", "26 przystanków; wcześniejszy kurs 16:58"],
+      ["17:16", "", "G.", "Powrót — do ustalenia", "", ""]
     ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",
