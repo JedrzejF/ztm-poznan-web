@@ -29,9 +29,9 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
 
 | przycisk | kiedy | uwagi |
 |---|---|---|
-| **Stanął** | koła całkowicie się zatrzymały **przy peronie** | jeśli najpierw stał w kolejce przed peronem, zaznacz „kolejka” i naciśnij dopiero przy peronie |
-| **Drzwi otwarte** | pierwsze drzwi **zaczynają** się otwierać | nie koniec otwierania — ten moment trudniej wskazać przy kilku drzwiach (pilotaż 27.09 zapisany wg końca otwierania, oznaczony w `data/static/teren/README.md`) |
-| **Drzwi zamknięte** | ostatnie drzwi **domknięte** | |
+| **Stanął** | koła całkowicie się zatrzymały **przy peronie** | jeśli najpierw stał w kolejce przed peronem — znacznik „kolejka przed peronem” (niżej), a „Stanął” dopiero przy peronie |
+| **Drzwi otwarte** | **pierwsze** otwarcie dowolnych drzwi — przez kierowcę albo pasażera | nie koniec otwierania. Kierowca „zwolnił” drzwi, a pasażer otworzył je po 5 s → moment otwarcia przez pasażera (zwolnienia nie widać) |
+| **Drzwi zamknięte** | **ostatnie** domknięcie drzwi | ktoś otworzył je jeszcze raz → **↻ drzwi otwarte ponownie** (skasuje zapisane zamknięcie), potem „Drzwi zamknięte” jeszcze raz |
 | **Ruszył** | koła ruszyły, pojazd zaczyna odjeżdżać | nie moment domknięcia drzwi |
 | **Stanął ponownie** | po ruszeniu staje jeszcze raz w obrębie przystanku (światło, do ~50 m) | tylko jeśli się zdarzy |
 | **Ruszył ponownie** | odjazd po drugim zatrzymaniu | |
@@ -64,8 +64,34 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
 6. **Ruszył** — pierwszy ruch koła względem tego samego punktu co w kroku 2.
    Nie przy sygnale zamykania drzwi, nie przy dźwięku silnika.
 7. Jeśli po kilku metrach **staje przed światłem** → **Stanął ponownie**,
-   potem **Ruszył ponownie**.
+   potem **Ruszył ponownie**. Jeśli przy tym znów otworzy drzwi (kierowca
+   wpuścił dobiegającego) → także **↻ drzwi otwarte ponownie**.
 8. Pojazd odjechał → **Zakończ**. Karta znika do listy „Zakończone”.
+
+## Znaczniki (oba tryby, 29.09)
+
+Każdy znacznik mierzy czas: 1. dotknięcie start, 2. koniec, 3. kasuje;
+bez końca trwa do „Ruszył”.
+
+- **czeka po wymianie** — wymiana skończona, a pojazd stoi dalej **przy
+  peronie**, bez ruchu. **Czas liczy się od razu po dotknięciu** (a gdy
+  zapisano „Drzwi zamknięte” — od nich, bo orientujesz się po kilku
+  sekundach). Powód dotknij kiedykolwiek albo wcale: **światło /
+  zablokowany** (samochód na pasie, nie może wyjechać) **/ na czas / inne**.
+  „Na czas” tylko, gdy oczywiste (np. > 10 s z otwartymi drzwiami bez
+  wymiany) — 4–6 s i tak nie odróżnimy od zwykłego postoju.
+- **kolejka przed peronem** — pojazd **całkiem stanął** w kolejce **do tego
+  peronu**: najwyżej ~50 m przed nim (długość tramwaju + zapas) i **bez
+  skrzyżowania po drodze**. Zatrzymania dalej — na światłach, rondzie,
+  w korku przed poprzednim skrzyżowaniem — to czas jazdy między
+  przystankami; GPS mierzy je sam, **nie zaznaczaj ich**. Samo zwolnienie
+  (przepuszczenie pieszego bez zatrzymania) też nie. Próg z estymatora:
+  GPS szuka postoju do 40 m od słupka.
+- **Stanął / Ruszył ponownie** (przyciski zegara) — to nie znacznik:
+  pojazd ruszył i po kilku metrach stanął (światło tuż za peronem).
+  Różnica wobec „czeka”: czy koła się ruszyły.
+- W jeździe dodatkowo **drugi przy peronie** — staje za innym pojazdem na
+  peronie podwójnym.
 
 **Dwa pojazdy naraz:** każdy ma swoją kartę, najnowsza na górze. Przed
 naciśnięciem sprawdź numer linii na karcie. Jeśli nie nadążasz — obsłuż
@@ -158,7 +184,8 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    notatnik sam przechodzi na kolejny. (Wyszukiwarka tylko, gdy linii nie ma
    w danych — objazd poza trasą jest zbyt rzadki, 28.09.)
    **Zegar postoju** (niebieski, na górze — 28.09: podstawa trybu, nie
-   dodatek): Stanął / Drzwi otwarte / Drzwi zamknięte / Ruszył — jak na
+   dodatek): Stanął / Drzwi otwarte / Drzwi zamknięte / Ruszył, pod nimi
+   Stanął ponownie / Ruszył ponownie i ↻ drzwi otwarte ponownie — jak na
    przystanku, zapisuje się do bieżącego przystanku. „Stanął”, gdy bieżący
    już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego przystanku,
    nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie. **Dotknięcie
@@ -174,15 +201,11 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej.
    **Zapełnienie** (luźno / siedzenia / stoją / ścisk) jest zwinięte — tylko
    gdy nie liczysz osób; przy liczbie osób nic nie dodaje (28.09).
-   **Znaczniki** (każdy mierzy czas — 1. dotknięcie start, 2. koniec,
-   3. kasuje; bez końca trwa do „Dalej”):
-   - **czeka na czas** — kierowca przetrzymuje pojazd (przyjechał za
-     wcześnie), drzwi otwarte lub zamknięte, bez wymiany;
-   - **korek / światło przed peronem** — stoi przed wjazdem na przystanek;
-   - **światło za przystankiem** — po zamknięciu drzwi czeka na zielone.
-     Zwykle orientujesz się po kilku sekundach — jeśli zapisałeś „Drzwi
-     zamknięte”, znacznik liczy się od nich (i kończy na „Ruszył”), więc można
-     go nacisnąć po fakcie. Bez zegara postoju — od dotknięcia, zaniżony.
+   **Znaczniki** — jak na przystanku (rozdział „Znaczniki” wyżej): czeka po
+   wymianie (+ powód), kolejka przed peronem, drugi przy peronie. Dawne
+   „czeka na czas” i „światło za przystankiem” (27–28.09) zastąpione:
+   czekanie przy peronie to „czeka” z powodem, drugie zatrzymanie kilka
+   metrów dalej to „Stanął/Ruszył ponownie”.
 
    **Notatka do tego przystanku** — krótki tekst przypięty do przystanku
    (np. „dobiegł pasażer”), zamiast uwag do całego przejazdu.

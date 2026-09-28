@@ -217,25 +217,90 @@
              obciazenie_zakres: "", znaczniki: {}, uwaga: "", czasy: {}, szac: false };
   }
 
-  /* Znaczniki postoju w trakcie jazdy (27.09: notatki "Krzesiny 170 s czekania
-     na czas" trafialy do uwag calego przejazdu). Kazdy znacznik mierzy czas:
-     1. dotkniecie = poczatek, 2. = koniec, 3. = skasowanie (pomylka).
-     Bez konca - trwa do "Dalej". */
-  var ZNACZNIKI = [["czas", "czeka na czas"], ["przed", "korek / \u015bwiat\u0142o przed peronem"],
-                   ["za", "\u015bwiat\u0142o za przystankiem"]];
+  /* Znaczniki postoju - te same w obu trybach (29.09, ujednolicenie). Kazdy
+     mierzy czas: 1. dotkniecie = poczatek, 2. = koniec, 3. = skasowanie.
+     Bez konca - trwa do "Ruszyl" (albo do "Dalej").
+     czeka  - wymiana skonczona, pojazd stoi dalej (swiatlo, zablokowany przez
+              samochod na pasie, na czas). Liczy sie OD RAZU po dotknieciu -
+              powod mozna dobrac pozniej albo wcale; gdy zapisano juz "Drzwi
+              zamkniete", start od nich (liczacy orientuje sie po kilku s).
+              Zastepuje "swiatlo za przystankiem" i "czeka na czas" (27-28.09),
+              ktore mieszaly czekanie przy peronie z drugim zatrzymaniem kilka
+              metrow dalej - to drugie to "Stanal/Ruszyl ponownie".
+     przed  - kolejka do TEGO peronu: pojazd stanal calkiem, najwyzej ~50 m
+              przed peronem (dlugosc tramwaju + zapas), bez skrzyzowania po
+              drodze. Dalsze zatrzymania to czas jazdy - GPS mierzy je sam.
+              Prog z estymatora: GPS szuka postoju do 40 m od slupka. */
+  var ZNACZNIKI = [["czeka", "czeka po wymianie"], ["przed", "kolejka przed peronem"]];
+  var POWODY = [["swiatlo", "\u015bwiat\u0142o"], ["blokada", "zablokowany"], ["czas", "na czas"], ["inne", "inne"]];
+  // kolumny z_*_s w CSV przejazdow do 28.09 - zostaja (puste), zeby stare
+  // pliki i nowe mialy ten sam uklad poczatku
+  var ZNACZNIKI_DAWNE = ["czas", "przed", "za"];
+
+  function znacznik(o, kod, t) {
+    if (!ZNACZNIKI.some(function (z) { return z[0] === kod; })) throw new Error("nieznany znacznik: " + kod);
+    var z = Object.assign({}, o.znaczniki || {}), x = z[kod], c = o.czasy || {};
+    if (!x) {
+      var od = kod === "czeka" && c.zamk !== undefined && c.zamk <= t ? c.zamk : t;
+      z[kod] = kod === "czeka" && c.rusz !== undefined ? { od: od, do: Math.max(c.rusz, od) } : { od: od };
+    } else if (x.do === undefined) z[kod] = Object.assign({}, x, { do: Math.max(t, x.od) });
+    else delete z[kod];
+    return Object.assign({}, o, { znaczniki: z });
+  }
+
+  /* Powod czekania: dotkniecie ustawia, drugie tego samego kasuje. Bez
+     znacznika - najpierw go uruchamia (czas liczy sie od razu). */
+  function powodCzekania(o, powod, t) {
+    if (!POWODY.some(function (p) { return p[0] === powod; })) throw new Error("nieznany pow\u00f3d: " + powod);
+    var x = (o.znaczniki || {}).czeka ? o : znacznik(o, "czeka", t);
+    var m = Object.assign({}, x.znaczniki.czeka);
+    if (m.powod === powod) delete m.powod; else m.powod = powod;
+    return Object.assign({}, x, { znaczniki: Object.assign({}, x.znaczniki, { czeka: m }) });
+  }
+
+  /* "Ruszyl" konczy trwajace znaczniki. */
+  function zamknijZnaczniki(o, t) {
+    var z = {};
+    Object.keys(o.znaczniki || {}).forEach(function (k) {
+      var m = o.znaczniki[k];
+      z[k] = m.do === undefined ? Object.assign({}, m, { do: Math.max(t, m.od) }) : m;
+    });
+    return Object.assign({}, o, { znaczniki: z });
+  }
+
+  /* Zapis zdarzenia z zamknieciem znacznikow na "Ruszyl" - dla obu trybow. */
+  function zdarzenie(o, kod, t) {
+    var x = zapisz(Object.assign({ czasy: {} }, o), kod, t);
+    return kod === "rusz" ? zamknijZnaczniki(x, t) : x;
+  }
+
+  /* Drzwi otwarte ponownie (29.09, autor): pasazer otwiera je jeszcze raz,
+     kierowca zwalnia dla dobiegajacego. "Drzwi zamkniete" ma byc OSTATNIM
+     domknieciem - wiec ponowne otwarcie przed "Ruszyl" kasuje zapisane
+     zamkniecie (i czekanie od niego liczone); kolejne dotkniecie "Drzwi
+     zamkniete" zapisze wlasciwe. Po "Ruszyl" (otwarcie po ruszeniu o kilka
+     metrow) - tylko liczy; takie zatrzymanie to "Stanal/Ruszyl ponownie". */
+  function ponowneOtwarcie(o) {
+    var x = Object.assign({}, o, { ponowne_otw: (o.ponowne_otw || 0) + 1 });
+    var c = o.czasy || {};
+    if (c.zamk !== undefined && c.rusz === undefined) {
+      var cz = Object.assign({}, c); delete cz.zamk;
+      var kor = Object.assign({}, o.korekty || {}); delete kor.zamk;
+      var zn = Object.assign({}, o.znaczniki || {});
+      if (zn.czeka && zn.czeka.do === undefined && zn.czeka.od === c.zamk) delete zn.czeka;
+      x = Object.assign(x, { czasy: cz, korekty: kor, znaczniki: zn });
+    }
+    return x;
+  }
 
   function przelaczZnacznik(prz, kod, t) {
-    var b = Object.assign({}, prz.biezacy), z = Object.assign({}, b.znaczniki || {});
-    var x = z[kod], c = b.czasy || {};
-    // swiatlo za przystankiem: liczacy orientuje sie po kilku sekundach -
-    // gdy zapisano "Drzwi zamkniete", start od nich (i koniec na "Ruszyl")
-    if (!x && kod === "za" && c.zamk !== undefined)
-      z[kod] = c.rusz !== undefined ? { od: c.zamk, do: Math.max(c.rusz, c.zamk) } : { od: c.zamk };
-    else if (!x) z[kod] = { od: t };
-    else if (x.do === undefined) z[kod] = { od: x.od, do: Math.max(t, x.od) };
-    else delete z[kod];
-    b.znaczniki = z;
-    return Object.assign({}, prz, { biezacy: b });
+    return Object.assign({}, prz, { biezacy: znacznik(prz.biezacy, kod, t) });
+  }
+  function powodJazdy(prz, powod, t) {
+    return Object.assign({}, prz, { biezacy: powodCzekania(prz.biezacy, powod, t) });
+  }
+  function ponowneJazdy(prz) {
+    return Object.assign({}, prz, { biezacy: ponowneOtwarcie(prz.biezacy) });
   }
 
   /* Czas trwania znacznika [s]; niezamkniety liczony do `koniec` (Dalej). */
@@ -309,23 +374,16 @@
      przystanku. "Stanal", gdy biezacy juz ruszyl = to jest nastepny przystanek:
      najpierw "Dalej" (zapis z ta chwila), potem zdarzenie - dane trafiaja do
      wlasciwego przystanku, nawet gdy liczacy nie zdazyl nacisnac "Dalej".
-     "Ruszyl" konczy trwajace znaczniki. */
-  var ZDARZENIA_JAZDY = ["stop", "otw", "zamk", "rusz"];
+     "Ruszyl" konczy trwajace znaczniki. 29.09: takze "Stanal/Ruszyl
+     ponownie" - drugie zatrzymanie kilka metrow za peronem (swiatlo), jak na
+     przystanku; "Stanal" (nie "ponownie") po ruszeniu to nadal nastepny przystanek. */
+  var ZDARZENIA_JAZDY = ["stop", "otw", "zamk", "rusz", "stop2", "rusz2"];
 
   function zdarzenieJazdy(prz, kod, t) {
     if (ZDARZENIA_JAZDY.indexOf(kod) < 0) throw new Error("nieznane zdarzenie: " + kod);
     var x = prz;
     if (kod === "stop" && (x.biezacy.czasy || {}).rusz !== undefined) x = dalej(x, t);
-    var b = zapisz(Object.assign({ czasy: {} }, x.biezacy), kod, t);
-    if (kod === "rusz") {
-      var z = {};
-      Object.keys(b.znaczniki || {}).forEach(function (k) {
-        var m = b.znaczniki[k];
-        z[k] = m.do === undefined ? { od: m.od, do: Math.max(t, m.od) } : m;
-      });
-      b = Object.assign({}, b, { znaczniki: z });
-    }
-    return Object.assign({}, x, { biezacy: b });
+    return Object.assign({}, x, { biezacy: zdarzenie(x.biezacy, kod, t) });
   }
 
   function cofnijZdarzenieJazdy(prz) {
@@ -378,7 +436,15 @@
   var KOLUMNY = ["id", "przystanek", "linia", "pojazd"].concat(KODY.map(function (k) { return "t_" + k; }))
     .concat(FLAGI.map(function (f) { return "f_" + f.kod; }))
     .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty",
-             "szacunek", "rola", "obserwator"]);
+             "szacunek", "rola", "obserwator",
+             "z_czeka_s", "z_czeka_powod", "z_przed_s", "ponowne_otw"]);
+
+  // czas znacznika [s] do CSV; niezamkniety - do `koniec`
+  function _zs(o, kod, koniec) {
+    var d = trwanieZnacznika((o.znaczniki || {})[kod], koniec);
+    return d === null ? "" : d;
+  }
+  function _powod(o) { return ((o.znaczniki || {}).czeka || {}).powod || ""; }
 
   /* CSV: czasy jako ms od epoki (UTC) - jednoznaczne, do zlaczenia z vehicle_ts. */
   function csv(obserwacje) {
@@ -386,9 +452,13 @@
     obserwacje.forEach(function (o) {
       var r = [o.id, o.przystanek, o.linia, o.pojazd]
         .concat(KODY.map(function (k) { return o.czasy[k]; }))
-        .concat(FLAGI.map(function (f) { return o.flagi[f.kod] ? 1 : 0; }))
+        // kolejka z czasem (znacznik) tez ustawia flage kolejki
+        .concat(FLAGI.map(function (f) {
+          return o.flagi[f.kod] || (f.kod === "kolejka" && (o.znaczniki || {}).przed) ? 1 : 0;
+        }))
         .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona, opisKorekt(o),
-                 o.szac ? 1 : 0, o.rola || "", o.obserwator || ""]);
+                 o.szac ? 1 : 0, o.rola || "", o.obserwator || "",
+                 _zs(o, "czeka", o.czasy.rusz), _powod(o), _zs(o, "przed", o.czasy.rusz), o.ponowne_otw || 0]);
       w.push(r.map(csvPole).join(","));
     });
     return w.join("\n") + "\n";
@@ -397,8 +467,9 @@
   var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
                            "t_pierwsze", "t_zapis", "t_stop", "t_otw", "t_zamk", "t_rusz",
                            "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_zakres", "obciazenie_szac"]
-    .concat(ZNACZNIKI.map(function (z) { return "z_" + z[0] + "_s"; })).concat(["uwaga_przyst", "uwagi"])
-    .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"]);
+    .concat(ZNACZNIKI_DAWNE.map(function (k) { return "z_" + k + "_s"; })).concat(["uwaga_przyst", "uwagi"])
+    .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"])
+    .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -412,8 +483,9 @@
                 p.wsiadlo || 0, p.wysiadlo || 0, p.tlok || "", obc,
                 obc === "" ? "" : zakresObciazenia(p, j.zakres),
                 sz[k] === null ? "" : sz[k]]
-          .concat(ZNACZNIKI.map(function (z) { var d = trwanieZnacznika((p.znaczniki || {})[z[0]], p.t); return d === null ? "" : d; }))
+          .concat(ZNACZNIKI_DAWNE.map(function (k) { return _zs(p, k, p.t); }))
           .concat([p.uwaga || "", j.uwagi, opisKorekt(p), p.szac ? 1 : 0, j.czesc || "", j.rola || "", j.obserwator || ""])
+          .concat([_zs(p, "czeka", p.t), _powod(p), c.stop2, c.rusz2, p.ponowne_otw || 0, p.drugi ? 1 : 0])
           .map(csvPole).join(","));
       });
     });
@@ -421,6 +493,8 @@
   }
 
   return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
+           POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
+           zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,

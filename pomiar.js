@@ -43,6 +43,33 @@
   }
   function etZdarzenia(kod) { return P.ZDARZENIA.filter(function (z) { return z.kod === kod; })[0].etykieta; }
 
+  // 1. dotkniecie start, 2. koniec, 3. kasuje; trwajacy odlicza na zywo (tik
+  // w start() po data-trwa-od - bez przerysowania, nie gubic klawiatury)
+  function opisZnacznika(x) {
+    if (!x) return "dotknij: start";
+    if (x.do === undefined) return "\u23f1 " + Math.round((Date.now() - x.od) / 1000) + " s \u2014 dotknij: koniec";
+    return P.trwanieZnacznika(x) + " s \u2713 (dotknij: skasuj)";
+  }
+  // znaczniki wspolne dla obu trybow (29.09): czeka (+ powod, dobierany
+  // kiedykolwiek - czas liczy sie od dotkniecia) i kolejka przed peronem
+  function znacznikiHtml(o, zDrugim) {
+    var zn = o.znaczniki || {}, pw = (zn.czeka || {}).powod;
+    return "<div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
+      var x = zn[z[0]], kl = !x ? "" : x.do === undefined ? "trwa" : "zrobione";
+      return "<button type='button' data-znak='" + z[0] + "' class='" + kl + "'>" + esc(z[1]) +
+        "<small" + (x && x.do === undefined ? " data-trwa-od='" + x.od + "'" : "") + ">" + opisZnacznika(x) + "</small></button>";
+    }).join("") +
+    (zDrugim ? "<button type='button' data-drugi class='" + (o.drugi ? "zrobione" : "") + "'>drugi przy peronie<small>" +
+      (o.drugi ? "\u2713" : "za innym pojazdem") + "</small></button>" : "") + "</div>" +
+    "<div class='powody'><span>czeka, bo:</span>" + P.POWODY.map(function (x) {
+      return "<button type='button' data-powod='" + x[0] + "' class='" + (pw === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function ponowneHtml(o) {
+    return "<button type='button' class='ponowne' data-ponowne>\u21bb drzwi otwarte ponownie" +
+      (o.ponowne_otw ? " <b>\u00d7" + o.ponowne_otw + "</b>" : "") + "</button>";
+  }
+
   function wczytaj() {
     try {
       var s = JSON.parse(localStorage.getItem(KLUCZ) || "null");
@@ -82,9 +109,10 @@
         return "<button type='button' data-zd='" + z.kod + "' class='" + (t !== undefined ? "zrobione " : "") +
                (k >= 4 ? "drugie" : "") + "' title='" + z.opis + "'>" + z.etykieta +
                (t !== undefined ? "<small>" + hms(t) + "</small>" : "") + "</button>";
-      }).join("") + "</div>" +
+      }).join("") + "</div>" + ponowneHtml(obs) +
       (stan.edycja && stan.edycja.id === obs.id && obs.czasy[stan.edycja.kod] !== undefined ?
         korektaHtml(etZdarzenia(stan.edycja.kod), obs.czasy[stan.edycja.kod]) : "") + "</div>" +
+      "<div class='sekcja sek-znaczniki'" + (wid.zegar ? "" : " hidden") + ">" + znacznikiHtml(obs, false) + "</div>" +
       "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
       licznikHtml("wsiadlo", "Wsiada", obs.wsiadlo) + licznikHtml("wysiadlo", "Wysiada", obs.wysiadlo) +
       szacHtml(obs.szac) +
@@ -123,7 +151,7 @@
           rysuj(); return;
         }
         try {
-          stan.otwarte[i] = P.zapisz(stan.otwarte[i], b.dataset.zd, t);
+          stan.otwarte[i] = P.zdarzenie(stan.otwarte[i], b.dataset.zd, t);   // Ruszyl konczy znaczniki
           if (navigator.vibrate) navigator.vibrate(30);
           zapisz(); rysuj();
         } catch (e) { kom.textContent = e.message; el.classList.add("blad"); }
@@ -149,6 +177,26 @@
     });
     el.querySelector("[data-szac]").addEventListener("click", function () {
       stan.otwarte[i].szac = !stan.otwarte[i].szac; zapisz(); rysuj();
+    });
+    var zmienObs = function (f) {
+      try { stan.otwarte[i] = f(stan.otwarte[i]); zapisz(); rysuj(); }
+      catch (e) { kom.textContent = e.message; }
+    };
+    el.querySelectorAll("[data-znak]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var t = Date.now(); if (navigator.vibrate) navigator.vibrate(20);
+        zmienObs(function (o) { return P.znacznik(o, b.dataset.znak, t); });
+      });
+    });
+    el.querySelectorAll("[data-powod]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var t = Date.now();
+        zmienObs(function (o) { return P.powodCzekania(o, b.dataset.powod, t); });
+      });
+    });
+    el.querySelector("[data-ponowne]").addEventListener("click", function () {
+      if (navigator.vibrate) navigator.vibrate(20);
+      zmienObs(P.ponowneOtwarcie);
     });
     el.querySelectorAll("[data-flaga]").forEach(function (cb) {
       cb.addEventListener("change", function () { stan.otwarte[i].flagi[cb.dataset.flaga] = cb.checked; zapisz(); });
@@ -319,12 +367,6 @@
     catch (e) { var k = document.querySelector("#jazda .komunikat"); if (k) k.textContent = e.message; return false; }
   }
 
-  // 1. dotkniecie start, 2. stop, 3. kasuje; trwajacy odlicza na zywo (tik niżej)
-  function opisZnacznika(x) {
-    if (!x) return "dotknij: start";
-    if (x.do === undefined) return "\u23f1 " + Math.round((Date.now() - x.od) / 1000) + " s \u2014 dotknij: koniec";
-    return P.trwanieZnacznika(x) + " s \u2713 (dotknij: skasuj)";
-  }
 
   function etTlok(k) { var x = P.TLOK.filter(function (t) { return t[0] === k; })[0]; return x ? x[1] : k; }
 
@@ -359,6 +401,10 @@
     var trasa = j.trasa || [];
     var wid = P.widoczne(j.rola);
     var edJ = stan.edycjaJ && cz[stan.edycjaJ] !== undefined ? stan.edycjaJ : null;
+    function przyciskZJ(k) {
+      return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
+        esc(etZdarzenia(k)) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "\u00a0") + "</small></button>";
+    }
     el.innerHTML =
       "<article class='karta'>" +
       "<div class='pola'>" +
@@ -381,10 +427,11 @@
         "<div class='podpowiedzi' data-podp hidden></div></div>") + "</div>" +
       // ZEGAR (28.09: podstawa trybu jazdy, nie opcja) - zdarzenia trafiaja do
       // biezacego przystanku; dotkniecie zapisanego otwiera korekte +/- s
-      "<div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='zegar-jazdy'>" + P.ZDARZENIA_JAZDY.map(function (k) {
-        return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
-          esc(etZdarzenia(k)) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "\u00a0") + "</small></button>";
-      }).join("") + "<button type='button' class='cofnij-zj' data-akcja='cofnij-zj' title='cofnij ostatnie zdarzenie'>\u21b6</button></div>" +
+      "<div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='zegar-jazdy'>" +
+      P.ZDARZENIA_JAZDY.slice(0, 4).map(przyciskZJ).join("") +
+      "<button type='button' class='cofnij-zj' data-akcja='cofnij-zj' title='cofnij ostatnie zdarzenie'>\u21b6</button></div>" +
+      // drugie zatrzymanie kilka metrow za peronem (29.09 - jak na przystanku)
+      "<div class='zegar-jazdy2'>" + P.ZDARZENIA_JAZDY.slice(4).map(przyciskZJ).join("") + ponowneHtml(b) + "</div>" +
       (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ]) : "") + "</div>" +
       // LICZENIE
       "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
@@ -414,12 +461,7 @@
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (b.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
       }).join("") + "</div></details></div>" +
       // ZNACZNIKI - ten, kto klika zegar
-      "<div class='sekcja sek-znaczniki'" + (wid.zegar ? "" : " hidden") + "><div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
-        var x = (b.znaczniki || {})[z[0]];
-        var kl = !x ? "" : x.do === undefined ? "trwa" : "zrobione";
-        return "<button type='button' data-znak='" + z[0] + "' class='" + kl + "'>" + esc(z[1]) +
-          "<small data-znak-czas='" + z[0] + "'>" + opisZnacznika(x) + "</small></button>";
-      }).join("") + "</div></div>" +
+      "<div class='sekcja sek-znaczniki'" + (wid.zegar ? "" : " hidden") + ">" + znacznikiHtml(b, true) + "</div>" +
       "<input class='uwaga-przyst' data-uwaga type='text' placeholder='notatka do tego przystanku' value='" + esc(b.uwaga || "") + "'>" +
 
       "<div class='przyciski' style='margin-top:10px'>" +
@@ -471,6 +513,21 @@
         var t = Date.now();
         if (navigator.vibrate) navigator.vibrate(20);
         zmienPrzejazd(function (x) { return P.przelaczZnacznik(x, bt.dataset.znak, t); });
+      });
+    });
+    el.querySelectorAll("[data-powod]").forEach(function (bt) {
+      bt.addEventListener("click", function () {
+        var t = Date.now();
+        zmienPrzejazd(function (x) { return P.powodJazdy(x, bt.dataset.powod, t); });
+      });
+    });
+    el.querySelector("[data-ponowne]").addEventListener("click", function () {
+      if (navigator.vibrate) navigator.vibrate(20);
+      zmienPrzejazd(P.ponowneJazdy);
+    });
+    el.querySelector("[data-drugi]").addEventListener("click", function () {
+      zmienPrzejazd(function (x) {
+        return Object.assign({}, x, { biezacy: Object.assign({}, x.biezacy, { drugi: !x.biezacy.drugi }) });
       });
     });
     var uw = el.querySelector("[data-uwaga]");
@@ -616,8 +673,8 @@
       document.getElementById("zegar").textContent =
         new Date().toLocaleTimeString("pl-PL", { hour12: false });
       // trwajace znaczniki: tylko tekst, bez przerysowania (nie gubic klawiatury)
-      if (stan.przejazd) document.querySelectorAll("[data-znak-czas]").forEach(function (el) {
-        el.textContent = opisZnacznika((stan.przejazd.biezacy.znaczniki || {})[el.dataset.znakCzas]);
+      document.querySelectorAll("[data-trwa-od]").forEach(function (el) {
+        el.textContent = opisZnacznika({ od: Number(el.dataset.trwaOd) });
       });
     }, 200);
     // ekran nie gasnie w trakcie pomiaru (tam, gdzie przegladarka pozwala)
