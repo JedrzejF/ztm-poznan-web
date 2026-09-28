@@ -33,12 +33,28 @@
     { kod: "niepewny", etykieta: "Któryś moment niepewny" }
   ];
 
+  /* Role (28.09, dwie osoby przy jednym pojezdzie): kazda widzi tylko swoje
+     przyciski - zamiast chowac sekcje pod malymi rozwijanymi naglowkami.
+     Rola i inicjaly trafiaja do CSV: przy analizie wiadomo, ktore zapisy
+     z dwoch telefonow opisuja ten sam pojazd, a podwojny zegar daje blad
+     obserwatora (roznica klikniec dwoch osob). */
+  var ROLE = [["zegar_liczenie", "zegar + liczenie"], ["zegar", "tylko zegar"], ["liczenie", "tylko liczenie"]];
+
+  function widoczne(rola) {
+    return { zegar: rola !== "liczenie", liczenie: rola !== "zegar" };
+  }
+
+  function _osoba(opcje) {
+    opcje = opcje || {};
+    return { rola: opcje.rola || "zegar_liczenie", obserwator: opcje.obserwator || "" };
+  }
+
   var licznik = 0;
-  function nowa(przystanek, teraz) {
+  function nowa(przystanek, teraz, opcje) {
     licznik += 1;
-    return { id: teraz + "-" + licznik, przystanek: przystanek || "", linia: "", pojazd: "",
+    return Object.assign({ id: teraz + "-" + licznik, przystanek: przystanek || "", linia: "", pojazd: "",
              czasy: {}, flagi: {}, uwagi: "", zamknieta: false, utworzona: teraz,
-             wsiadlo: 0, wysiadlo: 0, drzwi_obs: "wszystkie", tlok: "" };
+             wsiadlo: 0, wysiadlo: 0, drzwi_obs: "wszystkie", tlok: "", szac: false }, _osoba(opcje));
   }
 
   // Wymiana pasazerska (27.09, prosba autora): liczniki dla OBSERWOWANYCH
@@ -115,7 +131,8 @@
     var b = [];
     if (!obs.linia) b.push("linia");
     if (!/^\d{3,4}$/.test(obs.pojazd)) b.push("numer taborowy (3–4 cyfry)");
-    if (!obs.flagi.przejazd) {
+    // tylko liczenie: czasy klika druga osoba - ich brak to nie brak
+    if (!obs.flagi.przejazd && widoczne(obs.rola).zegar) {
       if (obs.czasy.stop === undefined) b.push("Stanął");
       if (obs.czasy.rusz === undefined) b.push("Ruszył");
     }
@@ -183,17 +200,21 @@
      dopasowuje przede wszystkim przystanek i kolejnosc, czasy tylko zawezaja. */
   var ZAKRES = [["", "\u2014"], ["drzwi", "moje drzwi"], ["czlon", "m\u00f3j cz\u0142on / wagon"],
                 ["caly", "ca\u0142y pojazd"]];
+  // Ktora czesc pojazdu liczy ta osoba (28.09): dwie osoby, przod i tyl
+  // tramwaju - bez tego dwa pliki "czlon" tego samego pojazdu wygladaja tak
+  // samo i nie wiadomo, czy je sumowac. Liczone od kabiny prowadzacego.
+  var CZESC = [["", "\u2014"], ["przod", "prz\u00f3d"], ["srodek", "\u015brodek"], ["tyl", "ty\u0142"]];
 
-  function nowyPrzejazd(teraz) {
+  function nowyPrzejazd(teraz, opcje) {
     licznik += 1;
-    return { id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
-             zakres: "caly", uwagi: "", postoje: [], utworzona: teraz,
-             biezacy: _pusty("") };
+    return Object.assign({ id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
+             zakres: "caly", czesc: "", uwagi: "", postoje: [], utworzona: teraz,
+             biezacy: _pusty("") }, _osoba(opcje));
   }
 
   function _pusty(przystanek) {
     return { przystanek: przystanek || "", wsiadlo: 0, wysiadlo: 0, tlok: "", obciazenie: "",
-             obciazenie_zakres: "", znaczniki: {}, uwaga: "", czasy: {} };
+             obciazenie_zakres: "", znaczniki: {}, uwaga: "", czasy: {}, szac: false };
   }
 
   /* Znaczniki postoju w trakcie jazdy (27.09: notatki "Krzesiny 170 s czekania
@@ -311,6 +332,12 @@
     return Object.assign({}, prz, { biezacy: cofnij(Object.assign({ czasy: {} }, prz.biezacy)) });
   }
 
+  /* Korekta +/- s zdarzenia biezacego przystanku - jak na przystanku (28.09:
+     "ruszyl 2 s wczesniej niz kliknalem" w notatkach). */
+  function przesunJazdy(prz, kod, delta) {
+    return Object.assign({}, prz, { biezacy: przesun(Object.assign({ czasy: {} }, prz.biezacy), kod, delta) });
+  }
+
   /* Przystanek bez zatrzymania (na zadanie) - przesuniecie bez zapisu. */
   function pomin(prz) {
     return ustawPrzystanek(prz, nastepny(prz.trasa, prz.biezacy.przystanek));
@@ -350,7 +377,8 @@
 
   var KOLUMNY = ["id", "przystanek", "linia", "pojazd"].concat(KODY.map(function (k) { return "t_" + k; }))
     .concat(FLAGI.map(function (f) { return "f_" + f.kod; }))
-    .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty"]);
+    .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty",
+             "szacunek", "rola", "obserwator"]);
 
   /* CSV: czasy jako ms od epoki (UTC) - jednoznaczne, do zlaczenia z vehicle_ts. */
   function csv(obserwacje) {
@@ -359,7 +387,8 @@
       var r = [o.id, o.przystanek, o.linia, o.pojazd]
         .concat(KODY.map(function (k) { return o.czasy[k]; }))
         .concat(FLAGI.map(function (f) { return o.flagi[f.kod] ? 1 : 0; }))
-        .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona, opisKorekt(o)]);
+        .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona, opisKorekt(o),
+                 o.szac ? 1 : 0, o.rola || "", o.obserwator || ""]);
       w.push(r.map(csvPole).join(","));
     });
     return w.join("\n") + "\n";
@@ -368,7 +397,8 @@
   var KOLUMNY_PRZEJAZDU = ["id", "linia", "pojazd", "kierunek", "cel", "zakres", "lp", "przystanek",
                            "t_pierwsze", "t_zapis", "t_stop", "t_otw", "t_zamk", "t_rusz",
                            "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_zakres", "obciazenie_szac"]
-    .concat(ZNACZNIKI.map(function (z) { return "z_" + z[0] + "_s"; })).concat(["uwaga_przyst", "uwagi"]);
+    .concat(ZNACZNIKI.map(function (z) { return "z_" + z[0] + "_s"; })).concat(["uwaga_przyst", "uwagi"])
+    .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -383,13 +413,15 @@
                 obc === "" ? "" : zakresObciazenia(p, j.zakres),
                 sz[k] === null ? "" : sz[k]]
           .concat(ZNACZNIKI.map(function (z) { var d = trwanieZnacznika((p.znaczniki || {})[z[0]], p.t); return d === null ? "" : d; }))
-          .concat([p.uwaga || "", j.uwagi]).map(csvPole).join(","));
+          .concat([p.uwaga || "", j.uwagi, opisKorekt(p), p.szac ? 1 : 0, j.czesc || "", j.rola || "", j.obserwator || ""])
+          .map(csvPole).join(","));
       });
     });
     return w.join("\n") + "\n";
   }
 
-  return { ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
+  return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
+           ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
            tenSamPrzystanek: tenSamPrzystanek, szacujObciazenie: szacujObciazenie,

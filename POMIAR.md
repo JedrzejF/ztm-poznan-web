@@ -86,11 +86,35 @@ i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
 rząd szybkich przycisków — pozostałe słupki tej nazwy („→ Szwedzka 215”)
 i ostatnio używane. Jedno stuknięcie zamiast wpisywania.
 
+## Dwie osoby, role (28.09)
+
+Pod przełącznikiem trybu: **zegar + liczenie** (jedna osoba, domyślnie),
+**tylko zegar**, **tylko liczenie** oraz pole na **inicjały**. Rola chowa
+cudze przyciski; rola i inicjały trafiają do CSV (kolumny `rola`,
+`obserwator`). Sekcje mają kolory: zegar niebieski, liczenie zielone,
+znaczniki bursztynowe.
+
+- **Priorytet: zegar.** Dokładne „Stanął” i „Ruszył” są cenniejsze niż
+  dokładna liczba osób.
+- **Liczenie dzielić po drzwiach**, nie na wsiadających / wysiadających —
+  przy podziale na kierunki obie osoby muszą patrzeć na wszystkie drzwi;
+  przy podziale po drzwiach każda widzi cały ruch swoich drzwi, a liczby
+  się sumują. Tramwaj: przód / tył (w jeździe **Liczone: mój człon**
+  i **moja część: przód / tył**, od kabiny prowadzącego). Autobus i
+  przystanek: osoba A — zegar + przednie drzwi, osoba B — pozostałe drzwi.
+- **Obie osoby mogą klikać zegar w jeździe** — różnica ich kliknięć to
+  zmierzony błąd obserwatora (potrzebny do kalibracji).
+- **Duża wymiana** (powyżej ~15 osób): **+5** przy grupie i przycisk
+  **≈ nie dałem rady policzyć dokładnie** (kolumna `szacunek`). Szacunek jest
+  użyteczny, pusty wiersz — nie.
+- W roli „tylko liczenie” brak czasów nie jest brakiem — klika je druga osoba
+  (łączenie po numerze taborowym, przystanku i czasie).
+
 ## Wymiana pasażerska (opcjonalnie)
 
 Pozwoli skorelować postój z liczbą wsiadających i wysiadających.
 **Priorytet mają czasy** — jeśli liczenie odciąga uwagę od „Stanął”
-i „Ruszył”, nie licz.
+i „Ruszył”, nie licz (albo podzielcie się rolami, wyżej).
 
 - **Licz jedne, zawsze te same drzwi** — w tramwaju pierwsze (przy
   motorniczym) albo te najbliżej wejścia na przystanek; w krótkim autobusie
@@ -133,12 +157,17 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
    notatnik sam przechodzi na kolejny. (Wyszukiwarka tylko, gdy linii nie ma
    w danych — objazd poza trasą jest zbyt rzadki, 28.09.)
-   **Zegar postoju (opcjonalnie):** Stanął / Drzwi otwarte / Drzwi zamknięte /
-   Ruszył — jak na przystanku, zapisuje się do bieżącego przystanku. „Stanął”,
-   gdy bieżący już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego
-   przystanku, nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie.
+   **Zegar postoju** (niebieski, na górze — 28.09: podstawa trybu, nie
+   dodatek): Stanął / Drzwi otwarte / Drzwi zamknięte / Ruszył — jak na
+   przystanku, zapisuje się do bieżącego przystanku. „Stanął”, gdy bieżący
+   już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego przystanku,
+   nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie. **Dotknięcie
+   zapisanego** otwiera korektę −5 / −1 / +1 / +5 s (kolumna `korekty`, np.
+   `rusz-2`) — zamiast notatki „ruszył 2 s wcześniej”.
 3. **Liczone** (obok „W pojeździe po odjeździe”): moje drzwi / mój człon
    (wagon) / cały pojazd (domyślnie) — raz na przejazd, zawsze to samo.
+   Gdy nie cały pojazd, obok **moja część (od kabiny)**: przód / środek / tył
+   — bez tego dwa pliki „człon” tego samego pojazdu nie dają się zsumować.
    Liczba osób w pojeździe ma domyślnie ten sam zakres („ta liczba to”);
    można ją zmienić na przystanku, np. raz policzyć cały pojazd. Szacunek
    ciągnie się tylko od liczby z tym samym zakresem co liczniki.
@@ -174,9 +203,11 @@ zawężają okno. **Eksport CSV w trybie „Jadę pojazdem”** daje plik
 `przejazdy_*.csv` (w trybie „Na przystanku” — `pomiar_*.csv`; osobno, bo
 udostępnianie dwóch plików naraz w telefonie oddawało tylko pierwszy).
 Wiersz na postój: `id, linia, pojazd, kierunek, cel, zakres, lp, przystanek,
-t_pierwsze, t_zapis, wsiadlo, wysiadlo, tlok, obciazenie, obciazenie_szac, z_czas_s, z_przed_s, z_za_s, uwaga_przyst,
-uwagi` (czasy w ms od epoki, UTC; `obciazenie` wpisane, `obciazenie_szac`
-z bilansu; `z_*_s` — czas trwania znaczników w sekundach). Trasy w notatniku to wariant główny kierunku z aktualnego
+t_pierwsze, t_zapis, t_stop, t_otw, t_zamk, t_rusz, wsiadlo, wysiadlo, tlok, obciazenie,
+obciazenie_zakres, obciazenie_szac, z_czas_s, z_przed_s, z_za_s, uwaga_przyst,
+uwagi, korekty, szacunek, czesc, rola, obserwator` (czasy w ms od epoki, UTC;
+`obciazenie` wpisane, `obciazenie_szac` z bilansu; `z_*_s` — czas trwania
+znaczników w sekundach; nowe kolumny zawsze na końcu). Trasy w notatniku to wariant główny kierunku z aktualnego
 rozkładu (ten sam co w tabeli punktualności); kursy skrócone kończą się
 wcześniej — wtedy po prostu **Zakończ**.
 

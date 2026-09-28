@@ -20,7 +20,28 @@
   ];
 
   var stan = { otwarte: [], zamkniete: [], przystanek: "", przystanekTekst: "",
-               tryb: "postoj", przejazd: null, przejazdy: [] };
+               tryb: "postoj", przejazd: null, przejazdy: [], rola: "zegar_liczenie", obserwator: "" };
+
+  function osoba() { return { rola: stan.rola, obserwator: stan.obserwator }; }
+
+  // przyciski licznikow: +, +5 (duza wymiana, 28.09), -
+  function licznikHtml(pole, etykieta, n) {
+    return "<div class='licznik'><span>" + etykieta + " <b>" + (n || 0) + "</b></span>" +
+      "<button type='button' data-licz='" + pole + "' data-d='1'>+</button>" +
+      "<button type='button' class='piec' data-licz='" + pole + "' data-d='5'>+5</button>" +
+      "<button type='button' class='minus' data-licz='" + pole + "' data-d='-1'>−</button></div>";
+  }
+  function szacHtml(szac) {
+    return "<button type='button' class='szac" + (szac ? " zrobione" : "") + "' data-szac>" +
+      (szac ? "≈ oszacowane ✓" : "≈ nie dałem rady policzyć dokładnie") + "</button>";
+  }
+  function korektaHtml(etykieta, t) {
+    return "<div class='korekta'><span>" + esc(etykieta) + " <b>" + hms(t) + "</b></span>" +
+      [-5, -1, 1, 5].map(function (d) {
+        return "<button type='button' data-przesun='" + d + "'>" + (d > 0 ? "+" : "−") + Math.abs(d) + " s</button>";
+      }).join("") + "<button type='button' data-przesun='ok'>OK</button></div>";
+  }
+  function etZdarzenia(kod) { return P.ZDARZENIA.filter(function (z) { return z.kod === kod; })[0].etykieta; }
 
   function wczytaj() {
     try {
@@ -48,13 +69,14 @@
     el.className = "karta";
     var tr = P.trwanie(obs);
     var inny = stan.przystanek && stan.przystanek !== obs.przystanek;
+    var wid = P.widoczne(obs.rola);
     el.innerHTML =
       "<div class='przyst-karty'><span>" + esc(obs.przystanek ? nazwa(obs.przystanek) + " [" + obs.przystanek + "]" : "przystanek nieustawiony") +
       "</span>" + (inny ? "<button type='button' data-akcja='przyst'>zmie\u0144 na: " + esc(nazwa(stan.przystanek)) + "</button>" : "") + "</div>" +
       "<div class='pola'>" +
       "<label>Linia<input data-pole='linia' value='" + esc(obs.linia) + "' autocomplete='off' autocapitalize='characters'></label>" +
       "<label>Nr taborowy<input data-pole='pojazd' value='" + esc(obs.pojazd) + "' inputmode='numeric' pattern='[0-9]*' autocomplete='off'></label>" +
-      "</div><div class='przyciski'>" +
+      "</div><div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='przyciski'>" +
       P.ZDARZENIA.map(function (z, k) {
         var t = obs.czasy[z.kod];
         return "<button type='button' data-zd='" + z.kod + "' class='" + (t !== undefined ? "zrobione " : "") +
@@ -62,23 +84,17 @@
                (t !== undefined ? "<small>" + hms(t) + "</small>" : "") + "</button>";
       }).join("") + "</div>" +
       (stan.edycja && stan.edycja.id === obs.id && obs.czasy[stan.edycja.kod] !== undefined ?
-        "<div class='korekta'><span>" + esc(P.ZDARZENIA.filter(function (z) { return z.kod === stan.edycja.kod; })[0].etykieta) +
-        " <b>" + hms(obs.czasy[stan.edycja.kod]) + "</b></span>" +
-        [-5, -1, 1, 5].map(function (d) {
-          return "<button type='button' data-przesun='" + d + "'>" + (d > 0 ? "+" : "\u2212") + Math.abs(d) + " s</button>";
-        }).join("") + "<button type='button' data-przesun='ok'>OK</button></div>" : "") +
-      "<div class='pasazerowie'>" +
-      "<div class='licznik'><span>Wsiada <b>" + (obs.wsiadlo || 0) + "</b></span>" +
-      "<button type='button' data-licz='wsiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wsiadlo' data-d='-1'>\u2212</button></div>" +
-      "<div class='licznik'><span>Wysiada <b>" + (obs.wysiadlo || 0) + "</b></span>" +
-      "<button type='button' data-licz='wysiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wysiadlo' data-d='-1'>\u2212</button></div>" +
+        korektaHtml(etZdarzenia(stan.edycja.kod), obs.czasy[stan.edycja.kod]) : "") + "</div>" +
+      "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
+      licznikHtml("wsiadlo", "Wsiada", obs.wsiadlo) + licznikHtml("wysiadlo", "Wysiada", obs.wysiadlo) +
+      szacHtml(obs.szac) +
       "<label class='drzwi'>Liczone drzwi <select data-pole='drzwi_obs'>" +
       ["", "1", "2", "3", "4", "wszystkie"].map(function (v) {
         return "<option value='" + v + "'" + (obs.drzwi_obs === v ? " selected" : "") + ">" + (v || "\u2014") + "</option>";
       }).join("") + "</select></label>" +
       "<div class='tlok'>" + P.TLOK.map(function (x) {
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (obs.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
-      }).join("") + "</div></div>" +
+      }).join("") + "</div></div></div>" +
       "<div class='wyniki'>" + [
         tr.postoj !== null ? "postój " + tr.postoj.toFixed(1) + " s" : null,
         tr.drzwi !== null ? "drzwi " + tr.drzwi.toFixed(1) + " s" : null,
@@ -130,6 +146,9 @@
         o.tlok = o.tlok === b.dataset.tlok ? "" : b.dataset.tlok;
         zapisz(); rysuj();
       });
+    });
+    el.querySelector("[data-szac]").addEventListener("click", function () {
+      stan.otwarte[i].szac = !stan.otwarte[i].szac; zapisz(); rysuj();
     });
     el.querySelectorAll("[data-flaga]").forEach(function (cb) {
       cb.addEventListener("change", function () { stan.otwarte[i].flagi[cb.dataset.flaga] = cb.checked; zapisz(); });
@@ -324,7 +343,7 @@
         "Na ka\u017cdym przystanku licz wsiadaj\u0105cych i wysiadaj\u0105cych, a gdy sko\u0144czysz (tak\u017ce ju\u017c w trakcie jazdy) \u2014 <b>Dalej</b>.</p>" +
         "<div class='lista' style='margin:0'>" + zrobione + "</div>";
       el.querySelector("#nowy-przejazd").addEventListener("click", function () {
-        stan.przejazd = P.nowyPrzejazd(Date.now()); zapisz(); rysujJazde();
+        stan.przejazd = P.nowyPrzejazd(Date.now(), osoba()); zapisz(); rysujJazde();
         var l = document.querySelector("#jazda [data-pole=linia]"); if (l) l.focus();
       });
       return;
@@ -338,6 +357,8 @@
     var zObc = P.zakresObciazenia(b, j.zakres);
     var cz = b.czasy || {};
     var trasa = j.trasa || [];
+    var wid = P.widoczne(j.rola);
+    var edJ = stan.edycjaJ && cz[stan.edycjaJ] !== undefined ? stan.edycjaJ : null;
     el.innerHTML =
       "<article class='karta'>" +
       "<div class='pola'>" +
@@ -358,19 +379,18 @@
       (trasa.length ? "" : "<div class='szukaj'><input data-szukaj type='search' placeholder='wpisz nazw\u0119 przystanku'" +
         " autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' enterkeyhint='done'>" +
         "<div class='podpowiedzi' data-podp hidden></div></div>") + "</div>" +
-      // 2. zegar postoju (opcjonalny) - zdarzenia trafiaja do biezacego przystanku
-      "<div class='zegar-jazdy'>" + P.ZDARZENIA_JAZDY.map(function (k) {
-        var z = P.ZDARZENIA.filter(function (x) { return x.kod === k; })[0];
-        return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + "'>" +
-          esc(z.etykieta) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "opcjonalnie") + "</small></button>";
+      // ZEGAR (28.09: podstawa trybu jazdy, nie opcja) - zdarzenia trafiaja do
+      // biezacego przystanku; dotkniecie zapisanego otwiera korekte +/- s
+      "<div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='zegar-jazdy'>" + P.ZDARZENIA_JAZDY.map(function (k) {
+        return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
+          esc(etZdarzenia(k)) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "\u00a0") + "</small></button>";
       }).join("") + "<button type='button' class='cofnij-zj' data-akcja='cofnij-zj' title='cofnij ostatnie zdarzenie'>\u21b6</button></div>" +
-      "<div class='pasazerowie'>" +
-      "<div class='licznik'><span>Wsiada <b>" + b.wsiadlo + "</b></span>" +
-      "<button type='button' data-licz='wsiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wsiadlo' data-d='-1'>\u2212</button></div>" +
-      "<div class='licznik'><span>Wysiada <b>" + b.wysiadlo + "</b></span>" +
-      "<button type='button' data-licz='wysiadlo' data-d='1'>+</button><button type='button' class='minus' data-licz='wysiadlo' data-d='-1'>\u2212</button></div>" +
+      (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ]) : "") + "</div>" +
+      // LICZENIE
+      "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
+      licznikHtml("wsiadlo", "Wsiada", b.wsiadlo) + licznikHtml("wysiadlo", "Wysiada", b.wysiadlo) + szacHtml(b.szac) +
       "</div>" +
-      // 3. liczba osob obok zakresu liczenia, zakres liczby domyslnie jak licznikow
+      // liczba osob obok zakresu liczenia, zakres liczby domyslnie jak licznikow
       "<div class='obc-wiersz'>" +
       "<label class='obciazenie'>W pojeździe po odjeździe" +
       "<input data-obc type='number' inputmode='numeric' min='0' value='" + esc(b.obciazenie === undefined ? "" : b.obciazenie) +
@@ -381,19 +401,25 @@
       "<label class='drzwi'>ta liczba to <select data-obc-zakres>" +
         [["czlon", "m\u00f3j cz\u0142on"], ["caly", "ca\u0142y pojazd"]].map(function (z) {
           return "<option value='" + z[0] + "'" + (zObc === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
-        }).join("") + "</select></label></div>" +
+        }).join("") + "</select></label>" +
+      // ktora czesc liczy ta osoba - tylko gdy nie caly pojazd (dwie osoby)
+      (j.zakres && j.zakres !== "caly" ? "<label class='drzwi'>moja cz\u0119\u015b\u0107 (od kabiny) <select data-pole='czesc'>" +
+        P.CZESC.map(function (z) {
+          return "<option value='" + z[0] + "'" + ((j.czesc || "") === z[0] ? " selected" : "") + ">" + z[1] + "</option>";
+        }).join("") + "</select></label>" : "") + "</div>" +
 
-      // 4. zapelnienie - tylko gdy nie liczysz osob (28.09)
+      // zapelnienie - tylko gdy nie liczysz osob (28.09)
       "<details" + (b.tlok ? " open" : "") + "><summary>Zape\u0142nienie (gdy nie liczysz os\u00f3b)</summary>" +
       "<div class='tlok'>" + P.TLOK.map(function (x) {
         return "<button type='button' data-tlok='" + x[0] + "' class='" + (b.tlok === x[0] ? "zrobione" : "") + "'>" + x[1] + "</button>";
-      }).join("") + "</div></details>" +
-      "<div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
+      }).join("") + "</div></details></div>" +
+      // ZNACZNIKI - ten, kto klika zegar
+      "<div class='sekcja sek-znaczniki'" + (wid.zegar ? "" : " hidden") + "><div class='znaczniki'>" + P.ZNACZNIKI.map(function (z) {
         var x = (b.znaczniki || {})[z[0]];
         var kl = !x ? "" : x.do === undefined ? "trwa" : "zrobione";
         return "<button type='button' data-znak='" + z[0] + "' class='" + kl + "'>" + esc(z[1]) +
           "<small data-znak-czas='" + z[0] + "'>" + opisZnacznika(x) + "</small></button>";
-      }).join("") + "</div>" +
+      }).join("") + "</div></div>" +
       "<input class='uwaga-przyst' data-uwaga type='text' placeholder='notatka do tego przystanku' value='" + esc(b.uwaga || "") + "'>" +
 
       "<div class='przyciski' style='margin-top:10px'>" +
@@ -467,8 +493,27 @@
     el.querySelectorAll("[data-zj]").forEach(function (bt) {
       bt.addEventListener("click", function () {
         var t = Date.now();                              // moment dotkniecia - przed czymkolwiek
-        if (zmienPrzejazd(function (x) { return P.zdarzenieJazdy(x, bt.dataset.zj, t); }) && navigator.vibrate)
+        var k = bt.dataset.zj;
+        // zapisany moment: korekta +/- s (jak na przystanku); wyjatek: "Stanal"
+        // po "Ruszyl" to juz nastepny przystanek - zapis, nie korekta
+        var c = stan.przejazd.biezacy.czasy || {};
+        if (c[k] !== undefined && !(k === "stop" && c.rusz !== undefined)) {
+          stan.edycjaJ = stan.edycjaJ === k ? null : k; rysujJazde(); return;
+        }
+        stan.edycjaJ = null;
+        if (zmienPrzejazd(function (x) { return P.zdarzenieJazdy(x, k, t); }) && navigator.vibrate)
           navigator.vibrate(30);
+      });
+    });
+    el.querySelectorAll("[data-przesun]").forEach(function (bt) {
+      bt.addEventListener("click", function () {
+        if (bt.dataset.przesun === "ok") { stan.edycjaJ = null; rysujJazde(); return; }
+        zmienPrzejazd(function (x) { return P.przesunJazdy(x, stan.edycjaJ, Number(bt.dataset.przesun) * 1000); });
+      });
+    });
+    el.querySelector("[data-szac]").addEventListener("click", function () {
+      zmienPrzejazd(function (x) {
+        return Object.assign({}, x, { biezacy: Object.assign({}, x.biezacy, { szac: !x.biezacy.szac }) });
       });
     });
     el.querySelector("[data-akcja=cofnij-zj]").addEventListener("click", function () {
@@ -512,6 +557,12 @@
     });
   }
 
+  function rysujRole() {
+    document.querySelectorAll("[data-rola]").forEach(function (b) {
+      b.classList.toggle("zrobione", b.dataset.rola === stan.rola);
+    });
+  }
+
   function ustawTryb(tryb) {
     stan.tryb = tryb; zapisz();
     var jazda = tryb === "jazda";
@@ -551,7 +602,7 @@
     });
     rysujSzybkie();
     document.getElementById("nowy").addEventListener("click", function () {
-      stan.otwarte.unshift(P.nowa(stan.przystanek, Date.now())); zapisz(); rysuj();
+      stan.otwarte.unshift(P.nowa(stan.przystanek, Date.now(), osoba())); zapisz(); rysuj();
       var pierwsze = document.querySelector("#karty [data-pole=linia]");
       if (pierwsze) pierwsze.focus();
     });
@@ -578,6 +629,25 @@
     document.querySelectorAll("[data-tryb]").forEach(function (b) {
       b.addEventListener("click", function () { ustawTryb(b.dataset.tryb); });
     });
+    // rola i inicjaly: ustawienie telefonu; zmiana obejmuje tez otwarte zapisy
+    // tej osoby (przelaczyla sie w trakcie), zakonczone zostaja jak byly
+    var ini = document.getElementById("obserwator");
+    ini.value = stan.obserwator || "";
+    ini.addEventListener("input", function () {
+      stan.obserwator = ini.value.trim().toUpperCase();
+      stan.otwarte.forEach(function (o) { o.obserwator = stan.obserwator; });
+      if (stan.przejazd) stan.przejazd.obserwator = stan.obserwator;
+      zapisz();
+    });
+    document.querySelectorAll("[data-rola]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        stan.rola = b.dataset.rola;
+        stan.otwarte.forEach(function (o) { o.rola = stan.rola; });
+        if (stan.przejazd) stan.przejazd.rola = stan.rola;
+        zapisz(); rysujRole(); ustawTryb(stan.tryb);
+      });
+    });
+    rysujRole();
     ustawTryb(stan.tryb || "postoj");
   }
   start();

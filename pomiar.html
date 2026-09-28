@@ -130,6 +130,32 @@
                   text-align: left; font: 14px system-ui, sans-serif; padding: 10px 0; }
   .lista .wiersz { font-size: 14px; display: flex; justify-content: space-between; gap: 8px;
                    border-bottom: 1px solid var(--linia); padding: 6px 0; }
+  /* 28.09: role i sekcje w kolorach - zegar niebieski, liczenie zielone, znaczniki bursztynowe */
+  .role { display: flex; gap: 4px; max-width: 720px; margin: 6px auto 0; }
+  .role button { flex: 1; min-height: 36px; font: 600 12px/1.1 system-ui, sans-serif; border-radius: 8px; padding: 4px;
+                 border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
+  .role button.zrobione { background: var(--tekst); color: var(--tlo); border-color: var(--tekst); }
+  .role input { width: 5.5em; font: 600 14px system-ui, sans-serif; padding: 6px; border-radius: 8px; text-align: center;
+                border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); text-transform: uppercase; }
+  .sekcja { border-left: 5px solid; border-radius: 6px; padding: 6px 6px 6px 8px; margin: 8px 0; }
+  .sek-zegar { border-color: #2f6fd6; background: rgba(47, 111, 214, .08); }
+  .sek-liczenie { border-color: #1f9d55; background: rgba(31, 157, 85, .08); }
+  .sek-znaczniki { border-color: #e3a008; background: rgba(227, 160, 8, .08); }
+  .sekcja .pasazerowie, .sekcja .znaczniki, .sekcja .zegar-jazdy { margin-top: 0; }
+  .sek-zegar .przyciski button.zrobione, .sek-zegar .zegar-jazdy button.zrobione { background: #2f6fd6; border-color: #2f6fd6; }
+  .zegar-jazdy { grid-template-columns: 1fr 1fr 1fr 1fr 44px; gap: 6px; }
+  .zegar-jazdy button { min-height: 68px; font-size: 15px; }
+  .zegar-jazdy button small { font-size: 11px; }
+  .zegar-jazdy button.edytowane { outline: 3px solid #e3a008; }
+  .sekcja .licznik { flex-wrap: wrap; padding: 6px; }
+  .sekcja .licznik span { flex-basis: 100%; font-size: 14px; }
+  .sekcja .licznik button { flex: 1; min-width: 0; }
+  .licznik button.piec { font-size: 15px; }
+  .sek-zegar .zegar-jazdy { grid-template-columns: 1fr 1fr 1fr 1fr 34px; gap: 4px; }
+  .sek-zegar .zegar-jazdy button { padding: 4px 1px; font-size: 14px; }
+  .szac { grid-column: 1 / -1; min-height: 40px; font: 600 13px system-ui, sans-serif; border-radius: 8px;
+          border: 1px dashed var(--linia); background: var(--tlo); color: var(--tekst-2); }
+  .szac.zrobione { border: 2px solid #1f9d55; color: var(--tekst); }
 </style>
 </head>
 <body>
@@ -139,6 +165,13 @@
   <div class="tryby" role="tablist">
     <button type="button" data-tryb="postoj">Na przystanku</button>
     <button type="button" data-tryb="jazda">Jadę pojazdem</button>
+  </div>
+  <div class="role">
+    <button type="button" data-rola="zegar_liczenie">zegar + liczenie</button>
+    <button type="button" data-rola="zegar">tylko zegar</button>
+    <button type="button" data-rola="liczenie">tylko liczenie</button>
+    <input id="obserwator" type="text" maxlength="4" placeholder="inicjały" aria-label="Twoje inicjały"
+           autocomplete="off" autocapitalize="characters" spellcheck="false">
   </div>
 </header>
 <div class="pasek-gora">
@@ -161,7 +194,7 @@
   <button id="wyczysc" type="button">Wyczyść</button>
 </div>
 
-<script src="pomiar-logika.js?v=dedadbc3bf"></script>
-<script src="pomiar.js?v=5b131d5c00"></script>
+<script src="pomiar-logika.js?v=3631fb1be3"></script>
+<script src="pomiar.js?v=8a9bf120b4"></script>
 </body>
 </html>
