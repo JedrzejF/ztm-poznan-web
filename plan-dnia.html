@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plan pomiarów</title>
+<meta name="description" content="Plan dnia pomiarów terenowych: miejsca, godziny, role.">
+<link rel="stylesheet" href="styl.css?v=0e48dbc602">
+<style>
+  body { padding: 0 16px 40px; }
+  .plan { max-width: 720px; margin: 0 auto; }
+  .plan h1 { font-size: 20px; margin: 14px 0 2px; }
+  .plan .wstep { font-size: 14px; color: var(--tekst-2); margin: 0 0 12px; }
+  .krok { border-left: 5px solid var(--linia); background: var(--tlo-2); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
+  .krok.razem { border-color: #2f6fd6; }
+  .krok.a { border-color: #1f9d55; }
+  .krok.b { border-color: #e3a008; }
+  .krok.w { border-color: #9b59b6; }
+  .krok.dojazd { background: none; border-left-style: dashed; padding: 4px 10px; }
+  .krok .g { font: 700 15px ui-monospace, Menlo, monospace; }
+  .krok .kto { font: 700 11px system-ui, sans-serif; text-transform: uppercase; letter-spacing: .04em; margin-left: 6px; color: var(--tekst-2); }
+  .krok .gdzie { font-weight: 600; margin: 2px 0; }
+  .krok p { margin: 2px 0; font-size: 14px; }
+  .krok .rola { font-size: 13px; }
+  .krok .uw { font-size: 13px; color: var(--tekst-2); }
+  .zasady { font-size: 14px; background: var(--tlo-2); border-radius: 8px; padding: 8px 12px; margin: 14px 0; }
+  .zasady li { margin: 3px 0; }
+  .legenda { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--tekst-2); margin-bottom: 6px; }
+  .legenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--k); }
+</style>
+</head>
+<body>
+<main class="plan">
+  <h1>Plan pomiarów — środa 30.09</h1>
+  <p class="wstep">Dwie osoby: <b>A</b> i <b>B</b> (ustalcie na starcie, kto jest kim; <b>W.</b> to jedna z was). Godziny z rozkładu ZTM (wersja z 24.09, z objazdami). Wszędzie wpisz inicjały w notatniku.</p>
+  <div class="legenda">
+    <span style="--k:#2f6fd6">razem</span><span style="--k:#1f9d55">A</span><span style="--k:#e3a008">B</span><span style="--k:#9b59b6">W.</span>
+  </div>
+
+  <div class="krok razem"><span class="g">13:00–13:30</span><span class="kto">razem</span>
+    <p class="gdzie">Fredry 117 → Gwarna</p>
+    <p>Szkolenie, pomiary próbne. ~33 tramwaje/h — szybka nauka.</p>
+    <p class="rola">Na przystanku.</p></div>
+
+  <div class="krok razem"><span class="g">13:30–13:50</span><span class="kto">razem</span>
+    <p class="gdzie">Fredry 117 (bez świateł)</p>
+    <p>Kilkanaście tramwajów.</p>
+    <p class="rola">A: <i>zegar + liczenie</i>, drzwi od przodu · B: <i>tylko liczenie</i>, środek i tył.</p></div>
+
+  <div class="krok razem"><span class="g">13:50–14:10</span><span class="kto">razem</span>
+    <p class="gdzie">Fredry 118 → Most Teatralny (światło 25 m za peronem)</p>
+    <p>Kilkanaście tramwajów.</p>
+    <p class="rola">Jak wyżej. Czekanie na zielone po wymianie: <b>„czeka po wymianie” → światło</b>.</p></div>
+
+  <div class="krok razem"><span class="g">14:16–14:25</span><span class="kto">razem</span>
+    <p class="gdzie">Tramwaj 8: Fredry (118) → Żeromskiego (61)</p>
+    <p class="rola">Jadę pojazdem — <b>oboje klikają zegar</b>, A liczy przód, B tył.</p>
+    <p class="uw">Zapas: 14:26.</p></div>
+
+  <div class="krok razem"><span class="g">14:25–14:45</span><span class="kto">razem</span>
+    <p class="gdzie">Żeromskiego 61 → Ogrody (bez świateł)</p>
+    <p>Stoicie razem — peron długi. Tramwaje 2, 7, 8, 18 i autobusy, ~35/h.</p>
+    <p class="rola">Jeden pojazd: A zegar i przód, B tył (B nie klika zegara, ustawia „Liczone drzwi”). <b>Dwa naraz: A bierze ten z przodu peronu, B ten z tyłu</b> — każdy z zegarem i liczeniem.</p></div>
+
+  <div class="krok dojazd"><span class="g">14:45–14:50</span> przejście na drugą stronę</div>
+
+  <div class="krok razem"><span class="g">14:50–15:05</span><span class="kto">razem</span>
+    <p class="gdzie">Żeromskiego 60 → Żeromskiego (światło 3 m za peronem)</p>
+    <p class="rola">Jak wyżej. „czeka po wymianie” → światło.</p></div>
+
+  <div class="krok a"><span class="g">15:08–15:15</span><span class="kto">A</span>
+    <p class="gdzie">Autobus 191: Żeromskiego (1448) → Swoboda</p>
+    <p class="rola">Jadę pojazdem, <i>zegar + liczenie</i>.</p></div>
+
+  <div class="krok a"><span class="g">15:15–15:33</span><span class="kto">A</span>
+    <p class="gdzie">Swoboda 628 → Bułgarska/Polska (światło 39 m za)</p>
+    <p class="rola">Na przystanku, do odjazdu 177.</p></div>
+
+  <div class="krok a"><span class="g">15:33–15:59</span><span class="kto">A</span>
+    <p class="gdzie">Autobus 177: Swoboda → Junikowo</p>
+    <p class="rola">Jadę pojazdem, 18 przystanków.</p>
+    <p class="uw">Zapas: 16:03.</p></div>
+
+  <div class="krok a"><span class="g">~16:05–16:17</span><span class="kto">A</span>
+    <p class="gdzie">Tramwaj 1 / 13 / 15: Junikowo → Rondo Nowaka-Jeziorańskiego</p>
+    <p class="rola">Jadę pojazdem.</p></div>
+
+  <div class="krok b"><span class="g">15:10–15:18</span><span class="kto">B</span>
+    <p class="gdzie">Tramwaj 2: Żeromskiego (60) → Rondo Kaponiera</p>
+    <p class="rola">Jadę pojazdem.</p>
+    <p class="uw">Zapas: tramwaj 18 o 15:14.</p></div>
+
+  <div class="krok b"><span class="g">15:18–15:55</span><span class="kto">B</span>
+    <p class="gdzie">Rondo Kaponiera 1768 → Uniwersytet Ekonomiczny</p>
+    <p class="rola">Na przystanku, <i>zegar + liczenie</i>. Tramwaje i autobusy.</p></div>
+
+  <div class="krok b"><span class="g">16:00–16:07</span><span class="kto">B</span>
+    <p class="gdzie">Tramwaj 13: Rondo Kaponiera (1767) → Rondo Nowaka-Jeziorańskiego</p>
+    <p class="rola">Jadę pojazdem. Potem na przystanku <b>JNJ 70 → Ostroroga</b>, czekając na A.</p></div>
+
+  <div class="krok razem"><span class="g">~16:20–17:00</span><span class="kto">razem</span>
+    <p class="gdzie">Rondo Nowaka-Jeziorańskiego → Junikowo → z powrotem</p>
+    <p>Tramwaj 1, 13 lub 15 (co 3–5 min), 11–12 min w jedną stronę.</p>
+    <p class="rola">Jadę pojazdem — <b>oboje klikają zegar</b>, A liczy przód, B tył.</p></div>
+
+  <div class="krok w"><span class="g">17:09–17:13</span><span class="kto">W.</span>
+    <p class="gdzie">Tramwaj 7: Rondo Nowaka-Jeziorańskiego (69) → Żeromskiego</p></div>
+
+  <div class="krok w"><span class="g">17:19–17:55</span><span class="kto">W.</span>
+    <p class="gdzie">Autobus 191: Żeromskiego → Os. Sobieskiego</p>
+    <p class="rola">Jadę pojazdem, <i>zegar + liczenie</i>, 27 przystanków.</p>
+    <p class="uw">Wcześniejszy kurs: 17:04 → 17:40.</p></div>
+
+  <div class="zasady">
+    <b>Zasady</b>
+    <ul>
+      <li><b>Zegar ważniejszy niż liczenie.</b> „Stanął” i „Ruszył” w chwili zdarzenia.</li>
+      <li>Duża wymiana: <b>+5</b> i „≈ nie dałem rady policzyć dokładnie”. Tłum — licz tylko swoje drzwi („moje drzwi”).</li>
+      <li>„Drzwi zamknięte” = <b>ostatnie</b> domknięcie; ktoś otworzył znów → <b>↻ drzwi otwarte ponownie</b>.</li>
+      <li>Po wymianie stoi przy peronie → <b>czeka po wymianie</b> (powód: światło / zablokowany / na czas). Ruszył i po kilku metrach stanął → <b>Stanął / Ruszył ponownie</b>.</li>
+      <li><b>Kolejka przed peronem</b> — tylko pełne zatrzymanie do ~50 m przed peronem, bez skrzyżowania po drodze. Światła dalej — nic nie klikamy.</li>
+      <li>Numer taborowy — wpisuj, gdy się da.</li>
+      <li>Na koniec: <b>Eksport CSV</b> w każdym trybie, w którym coś zapisałeś.</li>
+    </ul>
+  </div>
+</main>
+</body>
+</html>

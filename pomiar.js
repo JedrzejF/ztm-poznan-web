@@ -13,8 +13,8 @@
     ["7", "Poznańska 7 → Wielkopolska (światło za)"],
     ["158", "Kórnicka 158 → Rondo Rataje (bez świateł)"],
     ["159", "Kórnicka 159 (światło za)"],
-    ["628", "Swoboda 628 → Bułgarska/Polska (bez świateł)"],
-    ["629", "Swoboda 629 → Szpitalna (światło za)"],
+    ["628", "Swoboda 628 → Bułgarska/Polska (światło 39 m za)"],
+    ["629", "Swoboda 629 → Szpitalna (światło 31 m za)"],
     ["1131", "Małe Garbary 1131 (bez świateł)"],
     ["1130", "Grochowe Łąki 1130 (światło za)"],
   ];
@@ -620,17 +620,40 @@
     });
   }
 
+  // Plan dnia (29.09): osobna strona plan-dnia.html, tu wczytana jako karta -
+  // pomocnicy maja plan w tym samym miejscu, w ktorym mierza
+  var planWczytany = false;
+  function pokazPlan() {
+    var el = document.getElementById("plan");
+    if (planWczytany) return;
+    el.innerHTML = "<p class='drobny'>Wczytywanie planu\u2026</p>";
+    fetch("plan-dnia.html", { cache: "no-cache" }).then(function (r) { return r.text(); }).then(function (h) {
+      var d = new DOMParser().parseFromString(h, "text/html");
+      var styl = d.querySelector("style"), tresc = d.querySelector("main");
+      el.innerHTML = (styl ? "<style>" + styl.textContent.replace(/body \{[^}]*\}/, "") + "</style>" : "") +
+        (tresc ? tresc.outerHTML : "<p>Brak planu.</p>");
+      planWczytany = true;
+    }).catch(function () {
+      el.innerHTML = "<p class='drobny'>Plan niedost\u0119pny bez sieci \u2014 <a href='plan-dnia.html'>otw\u00f3rz osobno</a>.</p>";
+    });
+  }
+
   function ustawTryb(tryb) {
     stan.tryb = tryb; zapisz();
-    var jazda = tryb === "jazda";
+    var jazda = tryb === "jazda", plan = tryb === "plan", postoj = !jazda && !plan;
     document.getElementById("jazda").hidden = !jazda;
-    ["karty", "lista", "nowy"].forEach(function (id) { document.getElementById(id).hidden = jazda; });
-    document.querySelector(".pasek-gora .szukaj").hidden = jazda;
-    document.getElementById("szybkie").hidden = jazda;
+    document.getElementById("plan").hidden = !plan;
+    if (plan) pokazPlan();
+    ["karty", "lista", "nowy"].forEach(function (id) { document.getElementById(id).hidden = !postoj; });
+    document.querySelector(".pasek-gora").hidden = plan;
+    document.querySelector(".pasek-gora .szukaj").hidden = !postoj;
+    document.getElementById("szybkie").hidden = !postoj;
+    document.getElementById("eksport").hidden = plan;
+    document.getElementById("wyczysc").hidden = plan;
     document.querySelectorAll("[data-tryb]").forEach(function (b) {
       b.classList.toggle("zrobione", b.dataset.tryb === tryb);
     });
-    if (jazda) rysujJazde(); else rysuj();
+    if (jazda) rysujJazde(); else if (postoj) rysuj();
   }
 
   function start() {

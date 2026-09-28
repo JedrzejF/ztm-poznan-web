@@ -263,7 +263,7 @@ różnych grup — te same warunki ruchu, różnica tylko w świetle:
 |---|---|---|---|---|
 | 1 | **Fredry** (tramwaje) | 117 → Gwarna (bez świateł), 118 → Most Teatralny (światło 25 m za) | dzień roboczy 10:00–12:00 | ~24 |
 | 2 | Fredry | j.w. | dzień roboczy 15:00–17:00 | ~36 |
-| 3 | **Swoboda** (autobusy) | 628 → Bułgarska/Polska (bez świateł), 629 → Szpitalna (światło 31 m za) | 10:00–12:00 | ~20 |
+| 3 | **Swoboda** (autobusy) | 628 → Bułgarska/Polska (światło **39 m** za), 629 → Szpitalna (światło 31 m za) — **oba ze światłem** (poprawka 29.09, niżej) | 10:00–12:00 | ~20 |
 | 4 | Swoboda | j.w. | 15:00–17:00 | ~21 |
 
 - Dni robocze, najlepiej wt–czw. Nie w dniu zmiany rozkładu.
@@ -278,6 +278,16 @@ różnych grup — te same warunki ruchu, różnica tylko w świetle:
 „bez świateł” rzeczywiście nie ma sygnalizacji tuż za peronem, a na słupku
 „światło za” jest. Klasyfikacja pochodzi z mapy OSM (stan z maja 2026)
 i automatycznej reguły (35 m) — Twoje oko jest dokładniejsze.
+
+**Poprawka 29.09 (autor, potwierdzone w OSM):** za 628 też jest sygnalizacja,
+39 m za słupkiem — reguła 35 m wrzuciła ją do „bez świateł”. Swoboda nie
+jest więc parą światło / brak, tylko 31 m / 39 m. Porównanie z przystankiem
+bez świateł daje za to **Małe Garbary 1131** (brak sygnalizacji do 80 m)
+wobec **Grochowe Łąki 1130** (19 m) — autobusy, ~21 pojazdów/h. Na Swobodzie
+koszt światła mierzy wprost znacznik **„czeka po wymianie” z powodem
+„światło”** — bez grupy kontrolnej. Pozostałe pary sprawdzone w OSM 29.09:
+Fredry 117 brak do 80 m / 118 25 m; Poznańska 8 brak / 7 5 m; Kórnicka
+158 brak za peronem / 159 11 m.
 
 **Objazdy:** plan liczony na rozkładzie objazdowym obowiązującym do 04.10.2026.
 Po tej dacie częstotliwości mogą się zmienić — sprawdzić przed sesją.

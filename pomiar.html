@@ -71,6 +71,8 @@
                   border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   .tryby button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
   [hidden] { display: none !important; }
+  .tryby .tryb-plan { flex: 0 0 auto; padding: 0 14px; }
+  #plan { max-width: 720px; margin: 8px auto; }
   #jazda { max-width: 720px; margin: 12px auto; }
   .biezacy .szukaj { flex: none; }
   .pasazerowie { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -181,6 +183,7 @@
   <div class="tryby" role="tablist">
     <button type="button" data-tryb="postoj">Na przystanku</button>
     <button type="button" data-tryb="jazda">Jadę pojazdem</button>
+    <button type="button" data-tryb="plan" class="tryb-plan">Plan</button>
   </div>
   <div class="role">
     <button type="button" data-rola="zegar_liczenie">zegar + liczenie</button>
@@ -203,6 +206,7 @@
 <section class="karty" id="karty" aria-live="polite"></section>
 <section class="lista" id="lista"></section>
 <section id="jazda" hidden></section>
+<section id="plan" hidden></section>
 
 <div class="dol">
   <button class="glowny" id="nowy" type="button">+ Pojazd</button>
@@ -211,6 +215,6 @@
 </div>
 
 <script src="pomiar-logika.js?v=a79fe9616c"></script>
-<script src="pomiar.js?v=5d68cd2a0b"></script>
+<script src="pomiar.js?v=029b51b3f8"></script>
 </body>
 </html>
