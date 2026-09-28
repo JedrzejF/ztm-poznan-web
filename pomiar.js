@@ -620,32 +620,25 @@
     });
   }
 
-  // Plan dnia (29.09): osobna strona plan-dnia.html, tu wczytana jako karta -
-  // pomocnicy maja plan w tym samym miejscu, w ktorym mierza
-  var planWczytany = false;
+  // Plan dnia (29.09): tabela z plan.js; przycisk w naglowku, nie obok trybow
+  // pomiaru (autor: mieszal sie z nimi). Drugie dotkniecie wraca do pomiaru.
   function pokazPlan() {
-    var el = document.getElementById("plan");
-    if (planWczytany) return;
-    el.innerHTML = "<p class='drobny'>Wczytywanie planu\u2026</p>";
-    fetch("plan-dnia.html", { cache: "no-cache" }).then(function (r) { return r.text(); }).then(function (h) {
-      var d = new DOMParser().parseFromString(h, "text/html");
-      var styl = d.querySelector("style"), tresc = d.querySelector("main");
-      el.innerHTML = (styl ? "<style>" + styl.textContent.replace(/body \{[^}]*\}/, "") + "</style>" : "") +
-        (tresc ? tresc.outerHTML : "<p>Brak planu.</p>");
-      planWczytany = true;
-    }).catch(function () {
-      el.innerHTML = "<p class='drobny'>Plan niedost\u0119pny bez sieci \u2014 <a href='plan-dnia.html'>otw\u00f3rz osobno</a>.</p>";
-    });
+    if (window.PlanDnia) window.PlanDnia.rysuj(document.getElementById("plan"));
   }
 
   function ustawTryb(tryb) {
+    if (tryb !== "plan") stan.trybPomiaru = tryb;
     stan.tryb = tryb; zapisz();
+    document.getElementById("plan-przycisk").classList.toggle("zrobione", tryb === "plan");
+    document.getElementById("plan-przycisk").textContent = tryb === "plan" ? "\u2190 wr\u00f3\u0107 do pomiaru" : "Plan dnia";
     var jazda = tryb === "jazda", plan = tryb === "plan", postoj = !jazda && !plan;
     document.getElementById("jazda").hidden = !jazda;
     document.getElementById("plan").hidden = !plan;
     if (plan) pokazPlan();
     ["karty", "lista", "nowy"].forEach(function (id) { document.getElementById(id).hidden = !postoj; });
     document.querySelector(".pasek-gora").hidden = plan;
+    document.querySelector(".tryby").hidden = plan;
+    document.querySelector(".role").hidden = plan;
     document.querySelector(".pasek-gora .szukaj").hidden = !postoj;
     document.getElementById("szybkie").hidden = !postoj;
     document.getElementById("eksport").hidden = plan;
@@ -708,6 +701,9 @@
     }
     document.querySelectorAll("[data-tryb]").forEach(function (b) {
       b.addEventListener("click", function () { ustawTryb(b.dataset.tryb); });
+    });
+    document.getElementById("plan-przycisk").addEventListener("click", function () {
+      ustawTryb(stan.tryb === "plan" ? (stan.trybPomiaru || "postoj") : "plan");
     });
     // rola i inicjaly: ustawienie telefonu; zmiana obejmuje tez otwarte zapisy
     // tej osoby (przelaczyla sie w trakcie), zakonczone zostaja jak byly
