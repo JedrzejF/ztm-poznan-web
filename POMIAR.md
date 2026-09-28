@@ -173,6 +173,14 @@ wcześniej — wtedy po prostu **Zakończ**.
 Na boku i z przodu pojazdu: **3 cyfry tramwaj, 4 cyfry autobus**. To klucz do
 dopasowania z GPS — obserwacja bez numeru jest bezużyteczna. Linię też wpisz.
 
+## Po co jeszcze obserwacje „na przystanku” (27.09)
+
+Z 15 czystych obserwacji skalibrowano poprawkę hamowania i ruszania
+(D-039): a = 0,73 m/s², ale 95% przedział 0,64–2,05 — poprawka postoju
+w sieci 3–7 s. **~50–70 obserwacji** zawęzi przedział mniej więcej o połowę;
+najlepiej po równo tramwaje i autobusy (osobne `a`), w odkrytym terenie
+(nie Piaśnicka — tunel). Przetrzymania i wymianę dają przejazdy.
+
 ## Plan próby
 
 **Cel: co najmniej 35 kompletnych obserwacji w każdej z 4 grup**
