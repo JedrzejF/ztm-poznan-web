@@ -71,7 +71,7 @@
                   border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   .tryby button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
   [hidden] { display: none !important; }
-  .nz { font-weight: 600; color: #b45309; margin: 0; }
+  .nz { font-weight: 600; color: var(--bursztyn-tekst); margin: 0; }
   .przyciski.nie-stanal { margin: 4px 0 8px; }
   .przyciski.nie-stanal button { min-height: 56px; border: 2px solid #e3a008; }
   .plan-przycisk { font: 600 13px system-ui, sans-serif; padding: 4px 10px; border-radius: 6px; margin-left: 6px;
@@ -118,18 +118,32 @@
   .obciazenie input { font: 600 18px system-ui, sans-serif; padding: 8px 10px; border-radius: 8px; width: 9em;
                       border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   .podpowiedzi { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-  .szybkie { display: flex; gap: 6px; flex-basis: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-  .szybkie::-webkit-scrollbar { display: none; }
+  .szybkie { display: grid; gap: 8px; flex-basis: 100%; min-width: 0; }
   .szybkie:empty { display: none; }
   .pasazerowie .tlok { grid-column: 1 / -1; }
-  .szybkie button { font: 14px/1.2 system-ui, sans-serif; padding: 8px 10px; min-height: 40px; border-radius: 8px;
-                    border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); text-align: left;
-                    flex: none; white-space: nowrap; }
-  .szybkie button small { color: var(--tekst-2); }
-  .szybkie button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
-  .szybkie button.zrobione small { color: #fff; }
+  /* 30.09: 1. nazwa (pole, kolor akcentu) i 2. kierunek (przyciski,
+     bursztynowe) wyraznie rozne; ostatnio uzywane - szare, male */
+  :root { --bursztyn-tekst: #a15c07; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bursztyn-tekst: #f0b429; } }
+  :root[data-theme="dark"] { --bursztyn-tekst: #f0b429; }
+  .etyk { display: block; font: 600 12px system-ui, sans-serif; color: var(--tekst-2); margin-bottom: 4px; }
+  .szukaj .etyk { color: var(--akcent); }
+  #przystanek { border: 2px solid var(--akcent); font-weight: 600; }
+  .kier-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+  .kier-wiersz .etyk { color: var(--bursztyn-tekst); }
+  .kier-wiersz.brak .kier-lista { padding: 4px; border-radius: 10px; outline: 2px dashed #e3a008; }
+  .szybkie button.kier { font: 600 15px/1.2 system-ui, sans-serif; padding: 8px 12px; min-height: 44px; border-radius: 22px;
+                         border: 2px solid #e3a008; background: rgba(227,160,8,.10); color: var(--tekst); text-align: left; }
+  .szybkie button.kier.zrobione { background: #e3a008; color: #1a1a1a; }
+  .ostatnie { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+  .ostatnie::-webkit-scrollbar { display: none; }
+  .ostatnie .etyk { display: inline; margin: 0; flex: none; }
+  .ostatnie button { font: 13px/1.2 system-ui, sans-serif; padding: 6px 10px; min-height: 34px; border-radius: 8px;
+                     border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst-2); flex: none; white-space: nowrap; }
   .przyst-karty { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
                   font: 600 15px system-ui, sans-serif; margin-bottom: 8px; }
+  .w-strone { display: inline-block; font: 600 13px system-ui, sans-serif; color: var(--bursztyn-tekst);
+              border: 1px solid #e3a008; border-radius: 12px; padding: 1px 8px; }
   .przyst-karty button { font: 13px system-ui, sans-serif; padding: 6px 10px; border-radius: 8px;
                          border: 1px solid #e3a008; background: var(--tlo); color: var(--tekst); }
   button.wiersz { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--linia); color: var(--tekst);
@@ -203,7 +217,8 @@
 <div class="pasek-gora">
   <span class="zegar" id="zegar">--:--:--</span>
   <div class="szukaj">
-    <input id="przystanek" type="search" placeholder="Przystanek — wpisz 2+ litery" aria-label="Przystanek"
+    <span class="etyk">1. Przystanek</span>
+    <input id="przystanek" type="search" placeholder="wpisz nazwę (2+ litery)" aria-label="Przystanek"
            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
     <div id="podpowiedzi" class="podpowiedzi" role="listbox" hidden></div>
   </div>
@@ -222,7 +237,7 @@
 </div>
 
 <script src="plan.js?v=9c08046acf"></script>
-<script src="pomiar-logika.js?v=1f1c1157f8"></script>
-<script src="pomiar.js?v=0ee14af277"></script>
+<script src="pomiar-logika.js?v=f5f2f91948"></script>
+<script src="pomiar.js?v=0c64403dcc"></script>
 </body>
 </html>

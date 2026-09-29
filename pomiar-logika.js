@@ -450,9 +450,38 @@
   function tenSamPrzystanek(lista, id) {
     var ja = null;
     lista.forEach(function (p) { if (p.s === id) ja = p; });
-    if (!ja) return [];
-    return lista.filter(function (p) { return p.n === ja.n; })
+    return ja ? slupkiNazwy(lista, ja.n) : [];
+  }
+
+  function slupkiNazwy(lista, nazwa) {
+    return lista.filter(function (p) { return p.n === nazwa; })
       .sort(function (a, b) { return (a.k || "").localeCompare(b.k || "", "pl") || a.s.localeCompare(b.s); });
+  }
+
+  /* Przystanek w dwoch krokach (30.09, dla osob z zewnatrz: za duzo strzalek
+     i numerow): 1. nazwa z wyszukiwarki - kazda raz, 2. kierunek przyciskiem.
+     Wyniki wyszukiwania -> nazwy w tej samej kolejnosci; zapytanie z samych
+     cyfr (numer slupka) zostaje przy slupkach. */
+  function nazwyZWynikow(wyn) {
+    var byly = {}, out = [];
+    wyn.forEach(function (p) {
+      if (byly[p.n]) { byly[p.n].slupki.push(p.s); byly[p.n].l = byly[p.n].l.concat(p.l); return; }
+      byly[p.n] = { n: p.n, slupki: [p.s], t: p.t, l: p.l.slice() };
+      out.push(byly[p.n]);
+    });
+    out.forEach(function (g) {
+      g.l = g.l.filter(function (x, i) { return g.l.indexOf(x) === i; })
+        .sort(function (a, b) { return a.length - b.length || a.localeCompare(b); });
+    });
+    return out;
+  }
+
+  /* Etykieta kierunku bez strzalek i numerow slupka; gdy dwa slupki tej nazwy
+     maja ten sam kierunek (Rokietnica/Wezel: 3793 i 1843) - linie wyrozniaja. */
+  function etykietaKierunku(p, rodzenstwo) {
+    var k = p.k || "koniec trasy";
+    var ten = (rodzenstwo || []).filter(function (q) { return (q.k || "koniec trasy") === k; });
+    return ten.length > 1 ? k + " (linie " + p.l.slice(0, 4).join(", ") + (p.l.length > 4 ? "…" : "") + ")" : k;
   }
 
   function csvPole(v) {
@@ -527,7 +556,8 @@
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
-           tenSamPrzystanek: tenSamPrzystanek, szacujObciazenie: szacujObciazenie,
+           tenSamPrzystanek: tenSamPrzystanek, slupkiNazwy: slupkiNazwy, nazwyZWynikow: nazwyZWynikow,
+           etykietaKierunku: etykietaKierunku, szacujObciazenie: szacujObciazenie,
            zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,
            zdarzenieJazdy: zdarzenieJazdy, cofnijZdarzenieJazdy: cofnijZdarzenieJazdy,
            ZNACZNIKI: ZNACZNIKI, przelaczZnacznik: przelaczZnacznik, trwanieZnacznika: trwanieZnacznika,

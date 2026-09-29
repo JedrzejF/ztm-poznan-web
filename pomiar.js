@@ -19,7 +19,7 @@
     ["1130", "Grochowe Łąki 1130 (światło za)"],
   ];
 
-  var stan = { otwarte: [], zamkniete: [], przystanek: "", przystanekTekst: "",
+  var stan = { otwarte: [], zamkniete: [], przystanek: "", przystanekTekst: "", nazwaPrzystanku: "",
                tryb: "postoj", przejazd: null, przejazdy: [], rola: "zegar_liczenie", obserwator: "" };
 
   function osoba() { return { rola: stan.rola, obserwator: stan.obserwator }; }
@@ -96,6 +96,14 @@
 
   function godz(t) { return t ? czas(t) : "--:--"; }
 
+  // nazwa + kierunek jak nad kartami: bursztynowa "w strone ..." (30.09)
+  function przystanekKarty(id) {
+    var p = poId[id];
+    if (!id) return "przystanek nieustawiony";
+    if (!p) return esc(id);
+    return esc(p.n) + " <span class='w-strone'>w stron\u0119: " + esc(P.etykietaKierunku(p, P.slupkiNazwy(wszystkie, p.n))) + "</span>";
+  }
+
   function karta(obs, i) {
     var el = document.createElement("article");
     el.className = "karta";
@@ -103,8 +111,8 @@
     var inny = stan.przystanek && stan.przystanek !== obs.przystanek;
     var wid = P.widoczne(obs.rola);
     el.innerHTML =
-      "<div class='przyst-karty'><span>" + esc(obs.przystanek ? nazwa(obs.przystanek) + " [" + obs.przystanek + "]" : "przystanek nieustawiony") +
-      "</span>" + (inny ? "<button type='button' data-akcja='przyst'>zmie\u0144 na: " + esc(nazwa(stan.przystanek)) + "</button>" : "") + "</div>" +
+      "<div class='przyst-karty'><span>" + przystanekKarty(obs.przystanek) +
+      "</span>" + (inny ? "<button type='button' data-akcja='przyst'>zmie\u0144 na: " + przystanekKarty(stan.przystanek) + "</button>" : "") + "</div>" +
       "<div class='pola'>" +
       "<label>Linia<input data-pole='linia' value='" + esc(obs.linia) + "' autocomplete='off' autocapitalize='characters'></label>" +
       "<label>Nr taborowy<input data-pole='pojazd' value='" + esc(obs.pojazd) + "' inputmode='numeric' pattern='[0-9]*' autocomplete='off'></label>" +
@@ -305,8 +313,14 @@
     return p ? p.n + (p.k ? " \u2192 " + p.k : "") : (id || "\u2014");
   }
 
+  // p: slupek albo nazwa z kilkoma slupkami (P.nazwyZWynikow) - wtedy kierunek
+  // wybiera sie przyciskiem (krok 2), do tego czasu "+ Pojazd" prosi o kierunek
   function wybierz(pole, p) {
-    ustawBiezacy(p.s);
+    if (p.slupki && p.slupki.length === 1) ustawBiezacy(p.slupki[0]);
+    else if (p.slupki) {
+      stan.przystanek = ""; stan.nazwaPrzystanku = p.n; stan.przystanekTekst = p.n;
+      pole.value = p.n; zapisz(); rysujSzybkie(); rysuj();
+    } else ustawBiezacy(p.s);
     document.getElementById("podpowiedzi").hidden = true;
     pole.blur();
   }
@@ -316,26 +330,41 @@
   // samym przystanku wymagala kasowania dlugiego tekstu).
   function ustawBiezacy(id) {
     stan.przystanek = id;
-    stan.przystanekTekst = poId[id] ? nazwa(id) + " [" + id + "]" : id;
+    // w polu sama nazwa (30.09) - kierunek pokazuja przyciski pod spodem
+    stan.nazwaPrzystanku = poId[id] ? poId[id].n : "";
+    stan.przystanekTekst = poId[id] ? poId[id].n : id;
     stan.ostatnie = [id].concat((stan.ostatnie || []).filter(function (x) { return x !== id; })).slice(0, 6);
     document.getElementById("przystanek").value = stan.przystanekTekst;
     zapisz(); rysujSzybkie(); rysuj();
   }
 
+  // Pod polem: 2. kierunek (slupki tej nazwy, osobny kolor) i ostatnio
+  // uzywane przystanki (sama nazwa; dotkniecie wraca do tego samego slupka).
   function rysujSzybkie() {
     var box = document.getElementById("szybkie");
-    var ids = P.tenSamPrzystanek(wszystkie, stan.przystanek).map(function (p) { return p.s; });
-    (stan.ostatnie || []).forEach(function (id) { if (ids.indexOf(id) < 0 && poId[id]) ids.push(id); });
     var ja = poId[stan.przystanek];
-    box.innerHTML = ids.slice(0, 8).map(function (id) {
-      var p = poId[id] || { n: id, k: "" };
-      // ta sama nazwa co biezacy - wystarczy kierunek; inna - skrocona nazwa
-      var tekst = ja && p.n === ja.n ? "\u2192 " + (p.k || "koniec") : p.n + (p.k ? " \u2192 " + p.k : "");
-      return "<button type='button' data-szybki='" + esc(id) + "' class='" + (id === stan.przystanek ? "zrobione" : "") + "'>" +
-        esc(tekst) + " <small>" + esc(id) + "</small></button>";
-    }).join("");
-    var akt = box.querySelector(".zrobione");
-    if (akt) box.scrollLeft = Math.max(0, akt.offsetLeft - box.offsetLeft - 16);
+    var n = ja ? ja.n : (stan.nazwaPrzystanku || "");
+    var sl = n ? P.slupkiNazwy(wszystkie, n) : [];
+    var html = "";
+    if (sl.length) {
+      html += "<div class='kier-wiersz" + (ja ? "" : " brak") + "'><span class='etyk'>2. Kierunek \u2014 " +
+        (ja ? "w stron\u0119:" : "wybierz, w kt\u00f3r\u0105 stron\u0119 jad\u0105 pojazdy:") + "</span><div class='kier-lista'>" +
+        sl.map(function (p) {
+          return "<button type='button' class='kier" + (p.s === stan.przystanek ? " zrobione" : "") + "' data-szybki='" +
+            esc(p.s) + "'>" + esc(P.etykietaKierunku(p, sl)) + "</button>";
+        }).join("") + "</div></div>";
+    }
+    var byly = {}, inne = [];
+    (stan.ostatnie || []).forEach(function (id) {
+      var p = poId[id];
+      if (p && p.n !== n && !byly[p.n]) { byly[p.n] = 1; inne.push(id); }
+    });
+    if (inne.length) {
+      html += "<div class='ostatnie'><span class='etyk'>Ostatnio:</span>" + inne.slice(0, 6).map(function (id) {
+        return "<button type='button' data-szybki='" + esc(id) + "'>" + esc(poId[id].n) + "</button>";
+      }).join("") + "</div>";
+    }
+    box.innerHTML = html;
     box.querySelectorAll("[data-szybki]").forEach(function (b) {
       b.addEventListener("click", function () { ustawBiezacy(b.dataset.szybki); });
     });
@@ -345,6 +374,10 @@
     box = box || document.getElementById("podpowiedzi");
     wybor = wybor || wybierz;
     var wyn = P.szukajPrzystankow(wszystkie, pole.value, 20);
+    // na przystanku: kazda nazwa raz (kierunek potem przyciskiem); numer
+    // slupka i tryb jazdy - slupki jak dotad
+    var nazwy = wybor === wybierz && !/^\d+$/.test(pole.value.trim());
+    if (nazwy) wyn = P.nazwyZWynikow(wyn);
     box.innerHTML = "";
     if (pole.value.trim().length < 2) { box.hidden = true; return; }
     if (!wyn.length) {
@@ -353,7 +386,8 @@
     wyn.forEach(function (p) {
       var b = document.createElement("button");
       b.type = "button";
-      b.innerHTML = esc(p.n) + (p.k ? " \u2192 " + esc(p.k) : "") +
+      b.innerHTML = nazwy ? "<b>" + esc(p.n) + "</b><small>" + esc(p.l.length > 8 ? p.l.slice(0, 8).join(", ") + "\u2026" : p.l.join(", ")) + "</small>"
+        : esc(p.n) + (p.k ? " \u2192 " + esc(p.k) : "") +
         "<small>[" + esc(p.s) + "] " + esc((p.t === "0" ? "tramwaj " : p.t === "3" ? "autobus " : "") + p.l.join(", ")) + "</small>";
       // mousedown bez domyslnej akcji - pole nie traci fokusu, lista nie znika;
       // wybor dopiero na click, ktory przychodzi tylko po stuknieciu, nie po
@@ -676,7 +710,12 @@
     var pole = document.getElementById("przystanek");
     fetch("data/przystanki.json", { cache: "no-cache" }).then(function (r) { return r.json(); })
       .then(function (d) {
-        wszystkie = d.przystanki; trasy = d.trasy || {}; indeksuj(); rysujSzybkie();
+        wszystkie = d.przystanki; trasy = d.trasy || {}; indeksuj();
+        if (poId[stan.przystanek]) {             // zapis sprzed 30.09: "nazwa -> kierunek [id]"
+          stan.nazwaPrzystanku = poId[stan.przystanek].n; stan.przystanekTekst = stan.nazwaPrzystanku;
+          if (document.activeElement !== pole) pole.value = stan.przystanekTekst;
+        }
+        rysujSzybkie();
         if (stan.tryb !== "jazda") rysuj();
         if (document.activeElement === pole) podpowiedzi(pole);
         if (stan.tryb === "jazda") rysujJazde();
@@ -690,12 +729,18 @@
       setTimeout(function () { document.getElementById("podpowiedzi").hidden = true; }, 150);
     });
     pole.addEventListener("change", function () {
+      if (pole.value.trim() === stan.nazwaPrzystanku) return;   // ta sama nazwa - kierunek zostaje
       if (pole.value.trim() && P.idZTekstu(pole.value) !== stan.przystanek) {
+        stan.nazwaPrzystanku = "";
         stan.przystanekTekst = pole.value; stan.przystanek = P.idZTekstu(pole.value); zapisz(); rysuj();
       }
     });
     rysujSzybkie();
     document.getElementById("nowy").addEventListener("click", function () {
+      if (!stan.przystanek && stan.nazwaPrzystanku) {
+        alert("Wybierz kierunek (2.) \u2014 w kt\u00f3r\u0105 stron\u0119 jad\u0105 pojazdy z tego przystanku.");
+        return;
+      }
       stan.otwarte.unshift(P.nowa(stan.przystanek, Date.now(), osoba())); zapisz(); rysuj();
       var pierwsze = document.querySelector("#karty [data-pole=linia]");
       if (pierwsze) pierwsze.focus();

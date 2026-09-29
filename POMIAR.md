@@ -108,9 +108,13 @@ jeden, drugi pomiń (lepiej mniej, a pewnie).
 **Poprawki po fakcie:** lista „Zakończone” pokazuje godzinę, linię, pojazd
 i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
 
-**Zmiana kierunku na tym samym przystanku:** pod polem przystanku jest
-rząd szybkich przycisków — pozostałe słupki tej nazwy („→ Szwedzka 215”)
-i ostatnio używane. Jedno stuknięcie zamiast wpisywania.
+**Przystanek w dwóch krokach (od 30.09):** 1. w polu (niebieskie) wpisz
+nazwę i wybierz ją z listy — każda nazwa raz; 2. pod spodem bursztynowe
+przyciski **Kierunek — w stronę:** (następny przystanek), jeden na słupek.
+Dopóki kierunek nie jest wybrany, „+ Pojazd” o niego prosi. Zmiana kierunku
+na tym samym przystanku = jedno stuknięcie; „Ostatnio” — ostatnio używane
+przystanki. Numer słupka nie jest pokazywany (zapisuje się sam); wpisanie
+samego numeru w pole nadal wybiera słupek.
 
 ## Dwie osoby, role (28.09)
 
@@ -158,7 +162,7 @@ daje tylko własne liczenie (tryb „Jadę pojazdem” — dużo postojów na go
 
 Można mierzyć **gdziekolwiek** — dopasowanie do GPS idzie po numerze
 taborowym i czasie, a przystanek wynika z trajektorii pojazdu. W notatniku
-wpisz początek nazwy i wybierz słupek z kierunkiem („Fredry → Gwarna [117]”).
+wpisz początek nazwy, wybierz ją, a potem kierunek („Fredry”, w stronę: Gwarna).
 
 - Nie ma minimum na przystanek: jednostką analizy jest **grupa**
   (tramwaj/autobus × światło za przystankiem / brak), nie przystanek.
