@@ -101,7 +101,7 @@
     var p = poId[id];
     if (!id) return "przystanek nieustawiony";
     if (!p) return esc(id);
-    return esc(p.n) + " <span class='w-strone'>w stron\u0119: " + esc(P.etykietaKierunku(p, P.slupkiNazwy(wszystkie, p.n))) + "</span>";
+    return esc(p.n) + " <span class='w-strone'>" + esc(P.etykietaKierunku(p).kierunek) + "</span>";
   }
 
   function karta(obs, i) {
@@ -338,21 +338,28 @@
     zapisz(); rysujSzybkie(); rysuj();
   }
 
-  // Pod polem: 2. kierunek (slupki tej nazwy, osobny kolor) i ostatnio
-  // uzywane przystanki (sama nazwa; dotkniecie wraca do tego samego slupka).
+  // Pod paskiem (nie w nim - przyklejony pasek z 8 przyciskami Ronda Rataje
+  // blokowal przewijanie, 30.09): 2. kierunek - slupki tej nazwy, osobny
+  // kolor, kierunek i linie glowne; po wyborze zwiniete do jednego przycisku
+  // + "zmien kierunek". Nizej ostatnio uzywane (sama nazwa).
+  var rozwinKierunki = false;
   function rysujSzybkie() {
     var box = document.getElementById("szybkie");
     var ja = poId[stan.przystanek];
     var n = ja ? ja.n : (stan.nazwaPrzystanku || "");
     var sl = n ? P.slupkiNazwy(wszystkie, n) : [];
+    var zwin = ja && sl.length > 1 && !rozwinKierunki;
     var html = "";
     if (sl.length) {
-      html += "<div class='kier-wiersz" + (ja ? "" : " brak") + "'><span class='etyk'>2. Kierunek \u2014 " +
-        (ja ? "w stron\u0119:" : "wybierz, w kt\u00f3r\u0105 stron\u0119 jad\u0105 pojazdy:") + "</span><div class='kier-lista'>" +
-        sl.map(function (p) {
+      html += "<div class='kier-wiersz" + (ja ? "" : " brak") + "'><span class='etyk'>2. Kierunek" +
+        (ja ? "" : " \u2014 wybierz, w kt\u00f3r\u0105 stron\u0119 jad\u0105 pojazdy:") + "</span><div class='kier-lista'>" +
+        (zwin ? [ja] : sl).map(function (p) {
+          var e = P.etykietaKierunku(p);
           return "<button type='button' class='kier" + (p.s === stan.przystanek ? " zrobione" : "") + "' data-szybki='" +
-            esc(p.s) + "'>" + esc(P.etykietaKierunku(p, sl)) + "</button>";
-        }).join("") + "</div></div>";
+            esc(p.s) + "'><b>" + esc(e.kierunek) + "</b>" + (e.linie ? "<small>" + esc(e.linie) + "</small>" : "") + "</button>";
+        }).join("") +
+        (zwin ? "<button type='button' class='zmien-kier' data-rozwin>zmie\u0144 kierunek (" + sl.length + " do wyboru)</button>" : "") +
+        "</div></div>";
     }
     var byly = {}, inne = [];
     (stan.ostatnie || []).forEach(function (id) {
@@ -366,8 +373,10 @@
     }
     box.innerHTML = html;
     box.querySelectorAll("[data-szybki]").forEach(function (b) {
-      b.addEventListener("click", function () { ustawBiezacy(b.dataset.szybki); });
+      b.addEventListener("click", function () { rozwinKierunki = false; ustawBiezacy(b.dataset.szybki); });
     });
+    var rw = box.querySelector("[data-rozwin]");
+    if (rw) rw.addEventListener("click", function () { rozwinKierunki = true; rysujSzybkie(); });
   }
 
   function podpowiedzi(pole, box, wybor) {

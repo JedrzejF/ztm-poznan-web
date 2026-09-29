@@ -110,9 +110,12 @@ i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
 
 **Przystanek w dwóch krokach (od 30.09):** 1. w polu (niebieskie) wpisz
 nazwę i wybierz ją z listy — każda nazwa raz; 2. pod spodem bursztynowe
-przyciski **Kierunek — w stronę:** (następny przystanek), jeden na słupek.
-Dopóki kierunek nie jest wybrany, „+ Pojazd” o niego prosi. Zmiana kierunku
-na tym samym przystanku = jedno stuknięcie; „Ostatnio” — ostatnio używane
+przyciski **Kierunek** (pod paskiem, nie w nim), jeden na słupek: „w stronę:”
+następny przystanek o innej nazwie (na węzłach typu Rondo Rataje kursy
+przechodzą przez kilka słupków tej samej nazwy), pod spodem linie główne —
+tramwaje i autobusy osobno, bez zjazdów do zajezdni i nocnych. Dopóki
+kierunek nie jest wybrany, „+ Pojazd” o niego prosi; po wyborze lista zwija
+się do jednego przycisku + „zmień kierunek”. „Ostatnio” — ostatnio używane
 przystanki. Numer słupka nie jest pokazywany (zapisuje się sam); wpisanie
 samego numeru w pole nadal wybiera słupek.
 

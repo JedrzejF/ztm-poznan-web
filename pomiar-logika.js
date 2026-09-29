@@ -453,9 +453,12 @@
     return ja ? slupkiNazwy(lista, ja.n) : [];
   }
 
+  // slupki tej nazwy: wg kierunku, koniec trasy (tylko wysiadanie) na koncu
   function slupkiNazwy(lista, nazwa) {
     return lista.filter(function (p) { return p.n === nazwa; })
-      .sort(function (a, b) { return (a.k || "").localeCompare(b.k || "", "pl") || a.s.localeCompare(b.s); });
+      .sort(function (a, b) {
+        return (!a.k - !b.k) || (a.k || "").localeCompare(b.k || "", "pl") || a.s.localeCompare(b.s);
+      });
   }
 
   /* Przystanek w dwoch krokach (30.09, dla osob z zewnatrz: za duzo strzalek
@@ -476,12 +479,20 @@
     return out;
   }
 
-  /* Etykieta kierunku bez strzalek i numerow slupka; gdy dwa slupki tej nazwy
-     maja ten sam kierunek (Rokietnica/Wezel: 3793 i 1843) - linie wyrozniaja. */
-  function etykietaKierunku(p, rodzenstwo) {
-    var k = p.k || "koniec trasy";
-    var ten = (rodzenstwo || []).filter(function (q) { return (q.k || "koniec trasy") === k; });
-    return ten.length > 1 ? k + " (linie " + p.l.slice(0, 4).join(", ") + (p.l.length > 4 ? "…" : "") + ")" : k;
+  /* Etykieta slupka bez strzalek i numerow (30.09): kierunek = nastepny
+     przystanek o innej nazwie (d - kilka, gdy kursy sie rozchodza), linie
+     glowne osobno tramwaje / autobusy (bez zjazdow do zajezdni i nocnych;
+     pole g z publikacji). Na wezlach (Rondo Rataje: 8 slupkow) linie
+     rozrozniaja slupki o tym samym kierunku. */
+  var MAX_LINII = 8;
+  function _skrot(l) { return l.slice(0, MAX_LINII).join(", ") + (l.length > MAX_LINII ? "\u2026" : ""); }
+  function etykietaKierunku(p) {
+    // "w strone: ..." albo koniec trasy (tylko wysiadanie) - gotowy tekst
+    var kier = p.k ? "w stron\u0119: " + (p.d || [p.k]).join(" / ") : "koniec trasy \u2014 tylko wysiadanie";
+    var g = p.g || (p.t === "0" ? { "0": p.l } : { "3": p.l });
+    var linie = [["0", "tramwaje"], ["3", "autobusy"]].filter(function (x) { return (g[x[0]] || []).length; })
+      .map(function (x) { return x[1] + " " + _skrot(g[x[0]]); }).join(" \u00b7 ");
+    return { kierunek: kier, linie: linie };
   }
 
   function csvPole(v) {
