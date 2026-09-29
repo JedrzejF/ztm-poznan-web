@@ -21,10 +21,11 @@
       ["15:33", "15:59", "W.", "Autobus 177: Swoboda 628 → Junikowo", "jazda", "18 przystanków; zapas 16:03"],
       ["15:40", "16:25", "G.", "Os. Kopernika 1061 / 1062", "przystanek", "~21 pojazdów/h na stronę"],
       ["16:11", "16:33", "W.", "Autobus 177: Junikowo → Swoboda 629", "jazda", "18 przystanków; zapas 16:41 → 17:03"],
-      ["16:27", "17:16", "G.", "Autobus 164: Os. Kopernika 1061 → Puszkina", "jazda", "27 przystanków przez Jeżyce; zapas 16:42"],
+      ["16:27", "17:12", "G.", "Autobus 164: Os. Kopernika 1061 → Literacka", "jazda", "przez Jeżyce i Golęcin"],
       ["16:33", "17:13", "W.", "Swoboda 629 → Szpitalna", "przystanek", "~20 autobusów/h"],
+      ["17:12", "17:27", "G.", "Literacka", "przystanek", "164, 170, 226, 835, 837"],
       ["17:13", "17:55", "W.", "Autobus 191: Swoboda 629 → Os. Sobieskiego", "jazda", "26 przystanków; wcześniejszy kurs 16:58"],
-      ["17:16", "", "G.", "Powrót — do ustalenia", "", ""]
+      ["17:27", "17:44", "G.", "Autobus 835: Literacka → Stary Strzeszyn 17:30 → Strzeszynek 17:33 → Kiekrz 17:44", "jazda", "wysiadasz, gdzie ci pasuje; 835/837 to linie, na których GPS najbardziej myli przystanki — każdy postój z zegarem się liczy"]
     ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",
