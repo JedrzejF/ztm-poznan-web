@@ -25,10 +25,10 @@
       ["16:33", "17:13", "W.", "Swoboda 629 → Szpitalna", "przystanek", "~20 autobusów/h"],
       ["17:12", "17:27", "G.", "Literacka", "przystanek", "164, 170, 226, 835, 837"],
       ["17:13", "17:55", "W.", "Autobus 191: Swoboda 629 → Os. Sobieskiego", "jazda", "26 przystanków; wcześniejszy kurs 16:58"],
-      ["17:27", "17:54", "G.", "Autobus 835: Literacka → Kiekrz 17:44 → Rokietnica/Węzeł Przesiadkowy 17:54", "jazda", "najważniejszy odcinek dnia: pętla Wilków Morskich – Admiralska – Kiekrz – Admiralska – Podjazdowa. Admiralska i Podjazdowa na żądanie: gdy nie stanie → „⏱ minął słupek TERAZ” (albo „Nie stanął”, jeśli przeoczysz). Admiralska jest dwa razy — nie przeskakuj przystanków"],
-      ["17:54", "18:07", "G.", "Rokietnica/Węzeł Przesiadkowy", "przystanek", "trzy słupki tej nazwy — zapisz, na którym stoisz"],
-      ["18:07", "18:32", "G.", "Autobus 835: Rokietnica/Węzeł → Kiekrz → Strzeszynek 18:29 → Stary Strzeszyn 18:32", "jazda", "ta sama pętla w drugą stronę; koniec w Strzeszynie"]
-    ],
+      ["17:27", "17:54", "G.", "Autobus 835: Literacka → Kiekrz 17:44 → Rokietnica/Węzeł Przesiadkowy 17:54", "jazda", "szczególna uwaga na Admiralską i Podjazdową: gdy nie stanie → „minął słupek TERAZ”; Admiralską miniesz dwukrotnie. Wysiądź na pierwszym słupku Rokietnicy/Węzła (3793)"],
+      ["17:57", "18:30", "G.", "Opcja A — autobus 832: Rokietnica/Węzeł (3793) → Suchy Las 18:18–18:22 → Os. Sobieskiego 18:30", "jazda", "odjazd z tego samego słupka co przyjazd 835; na Suchy Las/Kościół zegar szczególnie ważny (GPS prawie nie widzi tam postojów — zanotuj, gdzie staje czoło autobusu względem znaku); Suchy Las/Wiadukt na żądanie — gdy nie stanie → „minął słupek TERAZ”"],
+      ["17:54", "18:07", "G.", "Opcja B — Rokietnica/Węzeł (3793)", "przystanek", "czekając na 835"],
+      ["18:07", "18:32", "G.", "Opcja B — autobus 835: Rokietnica/Węzeł (3793) → Kiekrz → Strzeszynek 18:29 → Stary Strzeszyn 18:32", "jazda", "szczególna uwaga na Podjazdową i Admiralską: gdy nie stanie → „minął słupek TERAZ”; Admiralską miniesz dwukrotnie"],    ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",
       "Duża wymiana: +5 i „≈ nie dałem rady”. Tłum: licz tylko swoje drzwi.",
