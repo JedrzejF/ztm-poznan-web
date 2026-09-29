@@ -401,6 +401,24 @@
     return ustawPrzystanek(prz, nastepny(prz.trasa, prz.biezacy.przystanek));
   }
 
+  /* "Nie stanal" z zapisem (29.09): sam fakt przejazdu bez zatrzymania to
+     dana - na przystankach na zadanie GPS nie widzi, czy pojazd stanal
+     (Admiralska 835/837: polowa postojow "przejazd", czasy z sekwencji
+     i z kotwicy roznia sie o 50-80 s). minal = true: t to chwila minięcia
+     slupka (znaku przystanku) - prawda do porownania z oboma czasami GPS.
+     Bez tego (latwo przeoczyc moment) - tylko fakt, t = chwila zapisu. */
+  function nieStanal(prz, t, minal) {
+    if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
+    var c = prz.biezacy.czasy || {};
+    if (c.stop !== undefined) throw new Error("zapisano „Stanął” — to nie przejazd (cofnij ↶)");
+    var ost = prz.postoje[prz.postoje.length - 1];
+    if (ost && ost.t > t) throw new Error("czas wcześniejszy niż poprzedni zapis");
+    var p = Object.assign({}, prz.biezacy, { t: t, nie_stanal: true });
+    if (minal) p.t_minal = t;
+    return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
+                                    biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
+  }
+
   /* Cofniecie ostatniego "Dalej": postoj wraca do edycji z licznikami. */
   function cofnijDalej(prz) {
     if (!prz.postoje.length) return prz;
@@ -469,7 +487,8 @@
                            "wsiadlo", "wysiadlo", "tlok", "obciazenie", "obciazenie_zakres", "obciazenie_szac"]
     .concat(ZNACZNIKI_DAWNE.map(function (k) { return "z_" + k + "_s"; })).concat(["uwaga_przyst", "uwagi"])
     .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"])
-    .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"]);
+    .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"])
+    .concat(["nie_stanal", "t_minal"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -486,6 +505,7 @@
           .concat(ZNACZNIKI_DAWNE.map(function (k) { return _zs(p, k, p.t); }))
           .concat([p.uwaga || "", j.uwagi, opisKorekt(p), p.szac ? 1 : 0, j.czesc || "", j.rola || "", j.obserwator || ""])
           .concat([_zs(p, "czeka", p.t), _powod(p), c.stop2, c.rusz2, p.ponowne_otw || 0, p.drugi ? 1 : 0])
+          .concat([p.nie_stanal ? 1 : 0, p.t_minal])
           .map(csvPole).join(","));
       });
     });
@@ -493,7 +513,7 @@
   }
 
   return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
-           POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
+           nieStanal: nieStanal, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,

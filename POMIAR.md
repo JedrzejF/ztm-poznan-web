@@ -217,8 +217,13 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 5. Skończyłeś liczyć (także już w trakcie jazdy) → **Dalej ▶**. Liczniki od
    zera, przystanek przechodzi na następny. To **nie** jest moment odjazdu —
    zapisuje się czas pierwszego „+” na przystanku i czas „Dalej”.
-6. Przystanek na żądanie, pojazd nie stanął → **Nie stanął** (przejście
-   dalej bez zapisu). Pomyłka → **Cofnij „Dalej”** (postój wraca do edycji).
+6. Przystanek na żądanie, pojazd nie stanął → **Nie stanął** (zapis
+   „przejazd”, dalej następny przystanek). Jeśli zauważysz chwilę, w której
+   pojazd **mija znak przystanku** → zamiast tego **⏱ nie stanął — minął
+   słupek TERAZ** (kolumna `t_minal`). Nie musisz — łatwo przeoczyć; sam fakt
+   „nie stanął” też się liczy. Po co: na przystankach na żądanie GPS często
+   nie widzi, czy pojazd stanął, i dwie metody liczenia czasu jazdy różnią się
+   tam o minutę (835/837, Admiralska — 29.09). Pomyłka → **Cofnij „Dalej”** (postój wraca do edycji).
 7. Wysiadasz → **Zakończ przejazd**.
 
 Do GPS dopasowuje przede wszystkim przystanek i kolejność; czasy tylko

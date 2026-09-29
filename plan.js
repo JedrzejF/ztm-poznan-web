@@ -25,7 +25,9 @@
       ["16:33", "17:13", "W.", "Swoboda 629 → Szpitalna", "przystanek", "~20 autobusów/h"],
       ["17:12", "17:27", "G.", "Literacka", "przystanek", "164, 170, 226, 835, 837"],
       ["17:13", "17:55", "W.", "Autobus 191: Swoboda 629 → Os. Sobieskiego", "jazda", "26 przystanków; wcześniejszy kurs 16:58"],
-      ["17:27", "17:44", "G.", "Autobus 835: Literacka → Stary Strzeszyn 17:30 → Strzeszynek 17:33 → Kiekrz 17:44", "jazda", "wysiadasz, gdzie ci pasuje; 835/837 to linie, na których GPS najbardziej myli przystanki — każdy postój z zegarem się liczy"]
+      ["17:27", "17:54", "G.", "Autobus 835: Literacka → Kiekrz 17:44 → Rokietnica/Węzeł Przesiadkowy 17:54", "jazda", "najważniejszy odcinek dnia: pętla Wilków Morskich – Admiralska – Kiekrz – Admiralska – Podjazdowa. Admiralska i Podjazdowa na żądanie: gdy nie stanie → „⏱ minął słupek TERAZ” (albo „Nie stanął”, jeśli przeoczysz). Admiralska jest dwa razy — nie przeskakuj przystanków"],
+      ["17:54", "18:07", "G.", "Rokietnica/Węzeł Przesiadkowy", "przystanek", "trzy słupki tej nazwy — zapisz, na którym stoisz"],
+      ["18:07", "18:32", "G.", "Autobus 835: Rokietnica/Węzeł → Kiekrz → Strzeszynek 18:29 → Stary Strzeszyn 18:32", "jazda", "ta sama pętla w drugą stronę; koniec w Strzeszynie"]
     ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",

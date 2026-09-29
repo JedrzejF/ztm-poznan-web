@@ -466,11 +466,16 @@
 
       "<div class='przyciski' style='margin-top:10px'>" +
       "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button>" +
-      "<button type='button' data-akcja='pomin'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
+      "<button type='button' data-akcja='nie-stanal'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
+      // chwila minięcia slupka - tylko gdy zauwazona (latwo przeoczyc)
+      "<button type='button' class='ponowne' data-akcja='minal' style='width:100%;margin-top:6px'>" +
+      "\u23f1 nie stan\u0105\u0142 \u2014 min\u0105\u0142 s\u0142upek TERAZ</button>" +
       "<div class='komunikat'></div>" +
       "<details><summary>Uwagi</summary><input type='text' data-pole='uwagi' value='" + esc(j.uwagi) + "'></details>" +
       "<div class='lista' style='margin:10px 0 0'>" + j.postoje.map(function (p, k) { return [p, szPost[k]]; }).slice(-6).reverse().map(function (x) {
         var p = x[0], o = x[1];
+        if (p.nie_stanal) return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) +
+          "</span><span>nie stan\u0105\u0142" + (p.t_minal ? " \u23f1" : "") + "</span></div>";
         return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) + "</span><span>+" + p.wsiadlo +
           " \u2212" + p.wysiadlo + (o !== null ? " \u00b7 " + (p.obciazenie !== undefined && p.obciazenie !== "" ? "" : "\u2248") + o + " os." : "") +
           (p.tlok ? " \u00b7 " + esc(etTlok(p.tlok)) : "") +
@@ -602,7 +607,13 @@
       var t = Date.now();
       if (zmienPrzejazd(function (x) { return P.dalej(x, t); }) && navigator.vibrate) navigator.vibrate(30);
     });
-    el.querySelector("[data-akcja=pomin]").addEventListener("click", function () { zmienPrzejazd(P.pomin); });
+    el.querySelector("[data-akcja=nie-stanal]").addEventListener("click", function () {
+      var tt = Date.now(); zmienPrzejazd(function (x) { return P.nieStanal(x, tt, false); });
+    });
+    el.querySelector("[data-akcja=minal]").addEventListener("click", function () {
+      var tt = Date.now();                               // chwila minięcia - przed czymkolwiek
+      if (zmienPrzejazd(function (x) { return P.nieStanal(x, tt, true); }) && navigator.vibrate) navigator.vibrate(30);
+    });
     el.querySelector("[data-akcja=cofnij]").addEventListener("click", function () { zmienPrzejazd(P.cofnijDalej); });
     el.querySelector("[data-akcja=usun]").addEventListener("click", function () {
       if (confirm("Usun\u0105\u0107 ten przejazd?")) { stan.przejazd = null; zapisz(); rysujJazde(); }
