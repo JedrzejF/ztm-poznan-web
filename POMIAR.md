@@ -217,7 +217,10 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 5. Skończyłeś liczyć (także już w trakcie jazdy) → **Dalej ▶**. Liczniki od
    zera, przystanek przechodzi na następny. To **nie** jest moment odjazdu —
    zapisuje się czas pierwszego „+” na przystanku i czas „Dalej”.
-6. Przystanek na żądanie, pojazd nie stanął → **Nie stanął** (zapis
+6. Przystanek na żądanie (notatnik rozpoznaje go sam z rozkładu dla wpisanej
+   linii: napis „na żądanie” i dwa przyciski na górze karty; na zwykłym
+   przystanku ich nie ma — pominięcie opisz w notatce), pojazd nie stanął →
+   **Nie stanął** (zapis
    „przejazd”, dalej następny przystanek). Jeśli zauważysz chwilę, w której
    pojazd **mija znak przystanku** → zamiast tego **⏱ nie stanął — minął
    słupek TERAZ** (kolumna `t_minal`). Nie musisz — łatwo przeoczyć; sam fakt

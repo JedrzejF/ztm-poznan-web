@@ -71,6 +71,9 @@
                   border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   .tryby button.zrobione { background: var(--akcent); color: #fff; border-color: var(--akcent); }
   [hidden] { display: none !important; }
+  .nz { font-weight: 600; color: #b45309; margin: 0; }
+  .przyciski.nie-stanal { margin: 4px 0 8px; }
+  .przyciski.nie-stanal button { min-height: 56px; border: 2px solid #e3a008; }
   .plan-przycisk { font: 600 13px system-ui, sans-serif; padding: 4px 10px; border-radius: 6px; margin-left: 6px;
                    border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); }
   #plan { max-width: 720px; margin: 8px auto; }
@@ -175,6 +178,10 @@
   .powody button { flex: 1; min-height: 36px; font: 600 12px system-ui, sans-serif; border-radius: 8px; padding: 2px 6px;
                    border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
   .powody button.zrobione { background: #e3a008; border-color: #e3a008; color: #111; }
+  /* iPhone/Safari (30.09, lag u N.): pole < 16 px powieksza strone przy
+     dotknieciu, a szybkie dwa dotkniecia przycisku - podwojne powiekszenie */
+  button, select, input { touch-action: manipulation; }
+  .pasek-gora input, details input[type=text], .biezacy input, .uwaga-przyst, #obserwator { font-size: 16px; }
 </style>
 </head>
 <body>
@@ -215,7 +222,7 @@
 </div>
 
 <script src="plan.js?v=9c08046acf"></script>
-<script src="pomiar-logika.js?v=ee828a01b6"></script>
-<script src="pomiar.js?v=646459edbd"></script>
+<script src="pomiar-logika.js?v=1f1c1157f8"></script>
+<script src="pomiar.js?v=0ee14af277"></script>
 </body>
 </html>

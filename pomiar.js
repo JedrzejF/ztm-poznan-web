@@ -84,12 +84,17 @@
     return String(v).replace(/&/g, "&amp;").replace(/'/g, "&#39;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   }
 
+  // jeden formater zamiast toLocaleTimeString przy kazdym wywolaniu (Safari
+  // tworzy go za kazdym razem od nowa; zegar odswiezany 5 razy na sekunde)
+  var FORMAT_CZASU = new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  function czas(t) { return FORMAT_CZASU.format(new Date(t)); }
+
   function hms(t) {
     var d = new Date(t);
-    return d.toLocaleTimeString("pl-PL", { hour12: false }) + "." + String(d.getMilliseconds()).padStart(3, "0").slice(0, 1);
+    return czas(d) + "." + String(d.getMilliseconds()).padStart(3, "0").slice(0, 1);
   }
 
-  function godz(t) { return t ? new Date(t).toLocaleTimeString("pl-PL", { hour12: false }) : "--:--"; }
+  function godz(t) { return t ? czas(t) : "--:--"; }
 
   function karta(obs, i) {
     var el = document.createElement("article");
@@ -400,6 +405,9 @@
     var cz = b.czasy || {};
     var trasa = j.trasa || [];
     var wid = P.widoczne(j.rola);
+    // na zadanie (30.09): "Nie stanal" na gorze karty, dopoki nie zapisano
+    // "Stanal"; na zwyklym przystanku tych przyciskow nie ma
+    var nz = P.naZadanie(poId[b.przystanek], j.linia);
     var edJ = stan.edycjaJ && cz[stan.edycjaJ] !== undefined ? stan.edycjaJ : null;
     function przyciskZJ(k) {
       return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
@@ -421,10 +429,15 @@
           return "<option value='" + esc(id) + "'" + (id === b.przystanek ? " selected" : "") + ">" + esc(nazwa(id)) + "</option>";
         }).join("") + "</select>"
         : "<b>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014") + "</b>") +
+      (nz ? "<span class='drobny nz'>na \u017c\u0105danie</span>" : "") +
       // wyszukiwarka tylko bez trasy linii (28.09: objazd poza trasa - zbyt rzadki)
       (trasa.length ? "" : "<div class='szukaj'><input data-szukaj type='search' placeholder='wpisz nazw\u0119 przystanku'" +
         " autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false' enterkeyhint='done'>" +
         "<div class='podpowiedzi' data-podp hidden></div></div>") + "</div>" +
+      (nz && cz.stop === undefined ? "<div class='przyciski nie-stanal'>" +
+        "<button type='button' data-akcja='nie-stanal'>Nie stan\u0105\u0142</button>" +
+        // chwila minięcia slupka - tylko gdy zauwazona (latwo przeoczyc)
+        "<button type='button' data-akcja='minal'>\u23f1 Nie stan\u0105\u0142<small>min\u0105\u0142 s\u0142upek TERAZ</small></button></div>" : "") +
       // ZEGAR (28.09: podstawa trybu jazdy, nie opcja) - zdarzenia trafiaja do
       // biezacego przystanku; dotkniecie zapisanego otwiera korekte +/- s
       "<div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='zegar-jazdy'>" +
@@ -464,12 +477,8 @@
       "<div class='sekcja sek-znaczniki'" + (wid.zegar ? "" : " hidden") + ">" + znacznikiHtml(b, true) + "</div>" +
       "<input class='uwaga-przyst' data-uwaga type='text' placeholder='notatka do tego przystanku' value='" + esc(b.uwaga || "") + "'>" +
 
-      "<div class='przyciski' style='margin-top:10px'>" +
-      "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button>" +
-      "<button type='button' data-akcja='nie-stanal'>Nie stan\u0105\u0142<small>(na \u017c\u0105danie)</small></button></div>" +
-      // chwila minięcia slupka - tylko gdy zauwazona (latwo przeoczyc)
-      "<button type='button' class='ponowne' data-akcja='minal' style='width:100%;margin-top:6px'>" +
-      "\u23f1 nie stan\u0105\u0142 \u2014 min\u0105\u0142 s\u0142upek TERAZ</button>" +
+      "<div class='przyciski' style='margin-top:10px;grid-template-columns:1fr'>" +
+      "<button type='button' class='zrobione' data-akcja='dalej'>Dalej \u25b6<small>przystanek policzony</small></button></div>" +
       "<div class='komunikat'></div>" +
       "<details><summary>Uwagi</summary><input type='text' data-pole='uwagi' value='" + esc(j.uwagi) + "'></details>" +
       "<div class='lista' style='margin:10px 0 0'>" + j.postoje.map(function (p, k) { return [p, szPost[k]]; }).slice(-6).reverse().map(function (x) {
@@ -607,10 +616,11 @@
       var t = Date.now();
       if (zmienPrzejazd(function (x) { return P.dalej(x, t); }) && navigator.vibrate) navigator.vibrate(30);
     });
-    el.querySelector("[data-akcja=nie-stanal]").addEventListener("click", function () {
+    var ns = el.querySelector("[data-akcja=nie-stanal]"), mn = el.querySelector("[data-akcja=minal]");
+    if (ns) ns.addEventListener("click", function () {
       var tt = Date.now(); zmienPrzejazd(function (x) { return P.nieStanal(x, tt, false); });
     });
-    el.querySelector("[data-akcja=minal]").addEventListener("click", function () {
+    if (mn) mn.addEventListener("click", function () {
       var tt = Date.now();                               // chwila minięcia - przed czymkolwiek
       if (zmienPrzejazd(function (x) { return P.nieStanal(x, tt, true); }) && navigator.vibrate) navigator.vibrate(30);
     });
@@ -698,7 +708,7 @@
     });
     setInterval(function () {
       document.getElementById("zegar").textContent =
-        new Date().toLocaleTimeString("pl-PL", { hour12: false });
+        czas(Date.now());
       // trwajace znaczniki: tylko tekst, bez przerysowania (nie gubic klawiatury)
       document.querySelectorAll("[data-trwa-od]").forEach(function (el) {
         el.textContent = opisZnacznika({ od: Number(el.dataset.trwaOd) });

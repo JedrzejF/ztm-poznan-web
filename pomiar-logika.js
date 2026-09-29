@@ -419,6 +419,15 @@
                                     biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
   }
 
+  /* Przystanek na zadanie dla tej linii (30.09): `p` - wpis z przystanki.json,
+     `z` = linie, dla ktorych slupek jest NZ (z rozkladu; zalezy od linii -
+     Rynek Jezycki NZ tylko dla nocnej 219). Notatnik pokazuje "Nie stanal"
+     tylko na NZ - na zwyklym pominiecie opisuje sie w notatce. */
+  function naZadanie(p, linia) {
+    var l = String(linia || "").trim().toUpperCase();
+    return !!(p && l && (p.z || []).indexOf(l) >= 0);
+  }
+
   /* Cofniecie ostatniego "Dalej": postoj wraca do edycji z licznikami. */
   function cofnijDalej(prz) {
     if (!prz.postoje.length) return prz;
@@ -513,7 +522,7 @@
   }
 
   return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
-           nieStanal: nieStanal, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
+           nieStanal: nieStanal, naZadanie: naZadanie, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
