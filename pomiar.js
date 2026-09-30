@@ -507,11 +507,12 @@
         return "<button type='button' data-kier='" + esc(k) + "' class='" + (j.kierunek === k ? "zrobione" : "") + "'>\u2192 " + esc(kier[k].cel) + "</button>";
       }).join("") + "</div>" : (j.linia ? "<p class='drobny'>Brak trasy tej linii w danych \u2014 przystanek wybierzesz wyszukiwark\u0105.</p>" : "")) +
       "<div class='biezacy'><span class='drobny'>Przystanek</span>" +
-      (trasa.length ? "<select data-przyst>" +
+      (trasa.length ? "<div class='biezacy-wiersz'><button type='button' data-akcja='wstecz' title='poprzedni przystanek'" +
+        (P.poprzedni(trasa, b.przystanek) ? "" : " disabled") + ">\u25c0</button><select data-przyst>" +
         (trasa.indexOf(b.przystanek) < 0 ? "<option value='" + esc(b.przystanek) + "' selected>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014 wybierz \u2014") + "</option>" : "") +
         trasa.map(function (id, k) {
           return "<option value='" + esc(id) + "'" + (id === b.przystanek ? " selected" : "") + ">" + esc(etTrasy[k]) + "</option>";
-        }).join("") + "</select>"
+        }).join("") + "</select></div>"
         : "<b>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014") + "</b>") +
       (nz ? "<span class='drobny nz'>na \u017c\u0105danie</span>" : "") +
       // wyszukiwarka tylko bez trasy linii (28.09: objazd poza trasa - zbyt rzadki)
@@ -592,11 +593,22 @@
         if (inp.dataset.pole === "zakres") {                 // wpisane liczby osob zostaja przy swoim zakresie
           stan.przejazd = P.ustawZakres(stan.przejazd, inp.value.trim()); zapisz(); rysujJazde(); return;
         }
+        // linia w trwajacym przejezdzie - decyzja dopiero po zejsciu z pola (change)
+        if (inp.dataset.pole === "linia" && stan.przejazd.postoje.length) return;
         stan.przejazd[inp.dataset.pole] = inp.value.trim(); zapisz();
       });
     });
     // linia zmienia liste kierunkow - przerysuj po zejsciu z pola, nie w trakcie pisania
-    el.querySelector("[data-pole=linia]").addEventListener("change", function () {
+    el.querySelector("[data-pole=linia]").addEventListener("change", function (ev) {
+      var nowa = ev.target.value.trim(), st = stan.przejazd;
+      if (st.postoje.length && nowa && nowa !== st.linia) {
+        // 30.09: inna linia w trakcie przejazdu = przesiadka - nowy przejazd
+        if (confirm("Zmieniasz lini\u0119 w trwaj\u0105cym przejedzie.\nZako\u0144czy\u0107 przejazd linii " + st.linia +
+                    " i zacz\u0105\u0107 nowy dla linii " + nowa + "?")) {
+          var para = P.nowyPoZmianieLinii(st, nowa, Date.now());
+          stan.przejazdy.push(para[0]); stan.przejazd = para[1];
+        } else st.linia = nowa;
+      }
       var jj = stan.przejazd, kk = Object.keys(trasy[jj.linia] || {});
       if (kk.indexOf(jj.kierunek) < 0) { jj.kierunek = ""; jj.cel = ""; jj.trasa = []; }
       zapisz();
@@ -652,6 +664,10 @@
     obc.addEventListener("input", function () {          // bez przerysowania - nie gubic klawiatury
       stan.przejazd.biezacy.obciazenie = obc.value.trim() === "" ? "" : Math.max(0, Math.round(Number(obc.value)));
       zapisz();
+    });
+    var wst = el.querySelector("[data-akcja=wstecz]");
+    if (wst) wst.addEventListener("click", function () {
+      zmienPrzejazd(function (x) { return P.ustawPrzystanek(x, P.poprzedni(x.trasa, x.biezacy.przystanek) || x.biezacy.przystanek); });
     });
     var sel = el.querySelector("[data-przyst]");
     if (sel) sel.addEventListener("change", function () {

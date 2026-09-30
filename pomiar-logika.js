@@ -463,11 +463,15 @@
   }
 
   /* "Dalej": postoj zapisany z czasem t, biezacy przesuwa sie na nastepny
-     przystanek trasy. */
+     przystanek trasy. 30.09: dwa "Dalej" szybciej niz PODWOJNE_MS to
+     podwojne dotkniecie (W., Wiedenska: drugi zapis 0,8 s po pierwszym,
+     pusty, przystanek przeskoczony) - drugie odrzucone. */
+  var PODWOJNE_MS = 1500;
   function dalej(prz, t) {
     if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
     var ost = prz.postoje[prz.postoje.length - 1];
     if (ost && ost.t > t) throw new Error("czas wcze\u015bniejszy ni\u017c poprzedni zapis");
+    if (ost && t - ost.t < PODWOJNE_MS) throw new Error("podw\u00f3jne \u201eDalej\u201d \u2014 pomini\u0119te");
     var p = _zamrozZakres(Object.assign({}, prz.biezacy, { t: t }), prz.zakres);
     return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
                                     biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
@@ -511,6 +515,24 @@
      "ruszyl 2 s wczesniej niz kliknalem" w notatkach). */
   function przesunJazdy(prz, kod, delta) {
     return Object.assign({}, prz, { biezacy: przesun(Object.assign({ czasy: {} }, prz.biezacy), kod, delta) });
+  }
+
+  /* Poprzedni przystanek trasy (30.09): powrot o jeden, gdy notatnik
+     przeskoczyl za daleko (przypadkowe "Dalej" / "Nie stanal") - zamiast
+     szukania na liscie, co dawalo powtorzone przystanki u trzech osob. */
+  function poprzedni(trasa, id) {
+    var i = trasa.indexOf(id);
+    return i > 0 ? trasa[i - 1] : "";
+  }
+
+  /* Zmiana linii w trwajacym przejezdzie (30.09, G.: tramwaj 8 i autobus 193
+     w jednym zapisie) - zapisany przejazd konczy sie ze STARA linia, nowy
+     zaczyna sie od biezacego przystanku (przesiadka). */
+  function nowyPoZmianieLinii(prz, linia, teraz) {
+    var nowy = Object.assign(nowyPrzejazd(teraz, { rola: prz.rola, obserwator: prz.obserwator }),
+      { linia: linia, zakres: prz.zakres, czesc: prz.czesc || "", biezacy: Object.assign({}, prz.biezacy) });
+    var zak = Object.assign({}, prz, { biezacy: _pusty("") });
+    return [zak, nowy];
   }
 
   /* Przystanek bez zatrzymania (na zadanie) - przesuniecie bez zapisu. */
@@ -691,7 +713,8 @@
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
-           nastepny: nastepny, etykietyTrasy: etykietyTrasy, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
+           nastepny: nastepny, etykietyTrasy: etykietyTrasy, poprzedni: poprzedni,
+           nowyPoZmianieLinii: nowyPoZmianieLinii, PODWOJNE_MS: PODWOJNE_MS, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
            tenSamPrzystanek: tenSamPrzystanek, slupkiNazwy: slupkiNazwy, nazwyZWynikow: nazwyZWynikow,
            etykietaKierunku: etykietaKierunku, szacujObciazenie: szacujObciazenie,
            zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,

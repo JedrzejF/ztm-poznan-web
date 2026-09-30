@@ -133,6 +133,13 @@ godziny początku i końca: `z_przed_od`, `z_przed_do`, `z_czeka_od`,
 `z_czeka_do` (ms od epoki) — kolejkę da się porównać z GPS. „Drzwi otwarte
 ponownie” kasuje tylko „Drzwi zamknięte”; czekanie biegnie dalej.
 
+**Jazda — pomyłki (od 30.09 wieczorem):** **◀** obok listy przystanków cofa
+o jeden przystanek trasy (przypadkowe „Dalej” albo „Nie stanął” — zamiast
+szukania na liście). Drugie „Dalej” szybciej niż 1,5 s po pierwszym jest
+pomijane (podwójne dotknięcie). Zmiana linii w trwającym przejeździe pyta,
+czy zakończyć go i zacząć nowy — przesiadka to nowy przejazd, od bieżącego
+przystanku.
+
 **Pomyłki (od 30.09):** dotknięcie zapisanego momentu otwiera korektę ±s
 i **✕ usuń ten moment** (przypadkowe „Stanął ponownie”); „Stanął ponownie”
 działa dopiero po „Ruszył”. Karta, w której nic jeszcze nie zapisano, sama
