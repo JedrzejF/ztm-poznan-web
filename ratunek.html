@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomiar — kopia danych</title>
+<!-- ratunek.html (30.09): przegladarka wbudowana w Messengera nie pozwala ani
+     udostepnic pliku, ani go pobrac, a inna przegladarka nie widzi danych
+     zapisanych w tej. Ta strona NICZEGO nie zmienia i nie kasuje - tylko czyta
+     zapis notatnika z tej samej przegladarki i pokazuje go jako tekst do
+     skopiowania. Otwierac w TEJ SAMEJ przegladarce, w ktorej byl pomiar. -->
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  h2 { font-size: 16px; margin: 20px 0 6px; }
+  p { margin: 6px 0; }
+  textarea { width: 100%; height: 120px; font: 12px ui-monospace, Menlo, monospace; box-sizing: border-box; }
+  button { font: 600 16px system-ui, sans-serif; padding: 12px 16px; border-radius: 8px; border: 1px solid #888;
+           background: #2a78d6; color: #fff; margin: 6px 6px 0 0; touch-action: manipulation; }
+  .ok { color: #1a7f37; font-weight: 600; }
+  .zle { color: #c0392b; font-weight: 600; }
+  .drobny { font-size: 13px; color: #666; }
+</style>
+</head>
+<body>
+<h1>Kopia danych z pomiaru</h1>
+<p id="stan">Czytam zapis…</p>
+<p class="drobny">Ta strona niczego nie kasuje ani nie zmienia. Dotknij „Kopiuj”, a potem wklej tekst
+w wiadomości (Messenger) i wyślij. Zrób to dla każdej części, która nie jest pusta.</p>
+<div id="czesci"></div>
+<script src="pomiar-logika.js"></script>
+<script>
+(function () {
+  "use strict";
+  var P = window.Pomiar, stan = null, el = document.getElementById("stan"), box = document.getElementById("czesci");
+  try { stan = JSON.parse(localStorage.getItem("ztm-pomiar-v1") || "null"); } catch (e) { stan = null; }
+  if (!stan) {
+    el.className = "zle";
+    el.textContent = "W tej przeglądarce nie ma zapisanych pomiarów. Otwórz ten adres w tej samej przeglądarce, w której był pomiar (np. kliknij link w Messengerze).";
+    return;
+  }
+  var postoje = (stan.zamkniete || []).concat(stan.otwarte || []);
+  var jazdy = (stan.przejazdy || []).concat(stan.przejazd ? [stan.przejazd] : []);
+  var przyst = jazdy.reduce(function (a, j) { return a + (j.postoje || []).length; }, 0);
+  el.className = "ok";
+  el.textContent = "Znaleziono: " + postoje.length + " pojazdów na przystanku, " + jazdy.length +
+    " przejazdów (" + przyst + " przystanków)" + (stan.obserwator ? " — " + stan.obserwator : "") + ".";
+
+  function czesc(tytul, tekst) {
+    var d = document.createElement("div");
+    var h = document.createElement("h2"); h.textContent = tytul; d.appendChild(h);
+    var t = document.createElement("textarea"); t.readOnly = true; t.value = tekst; d.appendChild(t);
+    var k = document.createElement("button"); k.type = "button"; k.textContent = "Kopiuj"; d.appendChild(k);
+    var info = document.createElement("span"); info.className = "drobny"; d.appendChild(info);
+    k.addEventListener("click", function () {
+      var gotowe = function () { info.className = "ok"; info.textContent = " skopiowano — wklej w wiadomości"; };
+      var recznie = function () {
+        t.focus(); t.select(); t.setSelectionRange(0, t.value.length);
+        var ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        if (ok) gotowe(); else { info.className = "zle"; info.textContent = " zaznaczono — wybierz „Kopiuj” z menu nad tekstem"; }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(gotowe, recznie);
+      else recznie();
+    });
+    if (navigator.share) {
+      var u = document.createElement("button"); u.type = "button"; u.textContent = "Udostępnij jako tekst"; d.appendChild(u);
+      u.addEventListener("click", function () { navigator.share({ title: tytul, text: t.value }).catch(function () {}); });
+    }
+    box.appendChild(d);
+  }
+  if (postoje.length) czesc("1. Na przystanku (pomiar_*.csv)", P.csv(postoje));
+  if (przyst) czesc("2. Przejazdy (przejazdy_*.csv)", P.csvPrzejazdy(jazdy));
+  czesc("3. Pełny zapis (kopia zapasowa)", JSON.stringify(stan));
+})();
+</script>
+</body>
+</html>
