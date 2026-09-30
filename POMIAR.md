@@ -126,6 +126,13 @@ się do jednego przycisku + „zmień kierunek”. „Ostatnio” — ostatnio u
 przystanki. Numer słupka nie jest pokazywany (zapisuje się sam); wpisanie
 samego numeru w pole nadal wybiera słupek.
 
+**Znaczniki — godziny i korekta (od 30.09 wieczorem):** zapisany (zamknięty)
+znacznik po dotknięciu pokazuje korektę **±s początku** (kolejkę zwykle
+zauważasz później, niż się zaczęła) i **✕ usuń znacznik**. CSV ma na końcu
+godziny początku i końca: `z_przed_od`, `z_przed_do`, `z_czeka_od`,
+`z_czeka_do` (ms od epoki) — kolejkę da się porównać z GPS. „Drzwi otwarte
+ponownie” kasuje tylko „Drzwi zamknięte”; czekanie biegnie dalej.
+
 **Pomyłki (od 30.09):** dotknięcie zapisanego momentu otwiera korektę ±s
 i **✕ usuń ten moment** (przypadkowe „Stanął ponownie”); „Stanął ponownie”
 działa dopiero po „Ruszył”. Karta, w której nic jeszcze nie zapisano, sama

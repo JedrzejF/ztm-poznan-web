@@ -279,9 +279,48 @@
 
   // kolejny odcinek tego samego znacznika: zamkniety czas idzie do `suma`
   function _wznow(x, t) {
-    var y = Object.assign({}, x, { suma: (x.suma || 0) + (x.do - x.od), od: t });
+    var y = Object.assign({}, x, { suma: (x.suma || 0) + (x.do - x.od), od: t,
+                                   od0: x.od0 !== undefined ? x.od0 : x.od });
     delete y.do;
     return y;
+  }
+
+  /* Korekta poczatku znacznika o delta ms (30.09, autor: kolejke zaznacza
+     sie zwykle pozniej, niz sie zaczela). Przy wznowionym czekaniu
+     przesuwa sie poczatek pierwszego odcinka (od0, suma). Korekta trafia
+     do "korekty" jako <kod>_od. */
+  function przesunZnacznik(o, kod, delta) {
+    var x = (o.znaczniki || {})[kod];
+    if (!x) throw new Error("znacznik nie jest zapisany");
+    var y = Object.assign({}, x);
+    if (x.suma !== undefined) {
+      if (x.suma - delta < 0) throw new Error("pocz\u0105tek p\u00f3\u017aniej ni\u017c koniec");
+      y.od0 = x.od0 + delta; y.suma = x.suma - delta;
+    } else {
+      var koniec = x.do !== undefined ? x.do : Infinity;
+      if (x.od + delta > koniec) throw new Error("pocz\u0105tek p\u00f3\u017aniej ni\u017c koniec");
+      y.od = x.od + delta;
+    }
+    var kor = Object.assign({}, o.korekty || {}), k = kod + "_od";
+    kor[k] = (kor[k] || 0) + delta;
+    if (!kor[k]) delete kor[k];
+    var z = Object.assign({}, o.znaczniki); z[kod] = y;
+    return Object.assign({}, o, { znaczniki: z, korekty: kor });
+  }
+
+  function usunZnacznik(o, kod) {
+    var z = Object.assign({}, o.znaczniki || {}); delete z[kod];
+    var kor = Object.assign({}, o.korekty || {}); delete kor[kod + "_od"];
+    return Object.assign({}, o, { znaczniki: z, korekty: kor });
+  }
+
+  /* Godziny znacznika do CSV (30.09): poczatek pierwszego odcinka i koniec;
+     niezamkniety - do `koniec`. Sama dlugosc nie pozwalala porownac kolejki
+     z GPS ani jej poprawic. */
+  function godzinyZnacznika(x, koniec) {
+    if (!x) return ["", ""];
+    var d = x.do !== undefined ? x.do : koniec;
+    return [x.od0 !== undefined ? x.od0 : x.od, d === undefined ? "" : d];
   }
 
   /* Powod czekania: dotkniecie ustawia, drugie tego samego kasuje. Bez
@@ -322,8 +361,9 @@
   /* Drzwi otwarte ponownie (29.09, autor): pasazer otwiera je jeszcze raz,
      kierowca zwalnia dla dobiegajacego. "Drzwi zamkniete" ma byc OSTATNIM
      domknieciem - wiec ponowne otwarcie przed "Ruszyl" kasuje zapisane
-     zamkniecie (i czekanie od niego liczone); kolejne dotkniecie "Drzwi
-     zamkniete" zapisze wlasciwe. Po "Ruszyl" (otwarcie po ruszeniu o kilka
+     zamkniecie; kolejne dotkniecie "Drzwi zamkniete" zapisze wlasciwe.
+     Czekanie biegnie dalej (30.09, Rondo Rataje: ponowne otwarcie w trakcie
+     czerwonego kasowalo ~2 min czekania - pojazd nadal stoi przy peronie). Po "Ruszyl" (otwarcie po ruszeniu o kilka
      metrow) - tylko liczy; takie zatrzymanie to "Stanal/Ruszyl ponownie". */
   function ponowneOtwarcie(o) {
     var x = Object.assign({}, o, { ponowne_otw: (o.ponowne_otw || 0) + 1 });
@@ -331,9 +371,7 @@
     if (c.zamk !== undefined && c.rusz === undefined) {
       var cz = Object.assign({}, c); delete cz.zamk;
       var kor = Object.assign({}, o.korekty || {}); delete kor.zamk;
-      var zn = Object.assign({}, o.znaczniki || {});
-      if (zn.czeka && zn.czeka.do === undefined && zn.czeka.od === c.zamk) delete zn.czeka;
-      x = Object.assign(x, { czasy: cz, korekty: kor, znaczniki: zn });
+      x = Object.assign(x, { czasy: cz, korekty: kor });
     }
     return x;
   }
@@ -583,7 +621,8 @@
     .concat(FLAGI.map(function (f) { return "f_" + f.kod; }))
     .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty",
              "szacunek", "rola", "obserwator",
-             "z_czeka_s", "z_czeka_powod", "z_przed_s", "ponowne_otw"]);
+             "z_czeka_s", "z_czeka_powod", "z_przed_s", "ponowne_otw",
+             "z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"]);
 
   // czas znacznika [s] do CSV; niezamkniety - do `koniec`
   function _zs(o, kod, koniec) {
@@ -604,7 +643,9 @@
         }))
         .concat([o.wsiadlo || 0, o.wysiadlo || 0, o.drzwi_obs || "", o.tlok || "", o.uwagi, o.utworzona, opisKorekt(o),
                  o.szac ? 1 : 0, o.rola || "", o.obserwator || "",
-                 _zs(o, "czeka", o.czasy.rusz), _powod(o), _zs(o, "przed", o.czasy.rusz), o.ponowne_otw || 0]);
+                 _zs(o, "czeka", o.czasy.rusz), _powod(o), _zs(o, "przed", o.czasy.rusz), o.ponowne_otw || 0]
+          .concat(godzinyZnacznika((o.znaczniki || {}).przed, o.czasy.rusz))
+          .concat(godzinyZnacznika((o.znaczniki || {}).czeka, o.czasy.rusz2 !== undefined ? o.czasy.rusz2 : o.czasy.rusz)));
       w.push(r.map(csvPole).join(","));
     });
     return w.join("\n") + "\n";
@@ -616,7 +657,8 @@
     .concat(ZNACZNIKI_DAWNE.map(function (k) { return "z_" + k + "_s"; })).concat(["uwaga_przyst", "uwagi"])
     .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"])
     .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"])
-    .concat(["nie_stanal", "t_minal"]);
+    .concat(["nie_stanal", "t_minal"])
+    .concat(["z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -634,6 +676,8 @@
           .concat([p.uwaga || "", j.uwagi, opisKorekt(p), p.szac ? 1 : 0, j.czesc || "", j.rola || "", j.obserwator || ""])
           .concat([_zs(p, "czeka", p.t), _powod(p), c.stop2, c.rusz2, p.ponowne_otw || 0, p.drugi ? 1 : 0])
           .concat([p.nie_stanal ? 1 : 0, p.t_minal])
+          .concat(godzinyZnacznika((p.znaczniki || {}).przed, p.t))
+          .concat(godzinyZnacznika((p.znaczniki || {}).czeka, p.t))
           .map(csvPole).join(","));
       });
     });
@@ -642,7 +686,8 @@
 
   return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
            nieStanal: nieStanal, naZadanie: naZadanie, usunZdarzenie: usunZdarzenie, nietknieta: nietknieta,
-           ustawZakres: ustawZakres, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
+           ustawZakres: ustawZakres, przesunZnacznik: przesunZnacznik, usunZnacznik: usunZnacznik,
+           godzinyZnacznika: godzinyZnacznika, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
