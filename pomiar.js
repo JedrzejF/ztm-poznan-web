@@ -39,7 +39,8 @@
     return "<div class='korekta'><span>" + esc(etykieta) + " <b>" + hms(t) + "</b></span>" +
       [-5, -1, 1, 5].map(function (d) {
         return "<button type='button' data-przesun='" + d + "'>" + (d > 0 ? "+" : "−") + Math.abs(d) + " s</button>";
-      }).join("") + "<button type='button' data-przesun='ok'>OK</button></div>";
+      }).join("") + "<button type='button' data-przesun='ok'>OK</button>" +
+      "<button type='button' data-przesun='usun' class='usun-moment'>\u2715 usu\u0144 ten moment</button></div>";
   }
   function etZdarzenia(kod) { return P.ZDARZENIA.filter(function (z) { return z.kod === kod; })[0].etykieta; }
 
@@ -149,7 +150,7 @@
       }).join("") +
       "<label>Uwagi <input type='text' data-pole='uwagi' value='" + esc(obs.uwagi) + "'></label></details>" +
       "<div class='komunikat'></div>" +
-      "<div class='stopka-karty'><button type='button' data-akcja='cofnij'>Cofnij</button>" +
+      "<div class='stopka-karty'><button type='button' data-akcja='cofnij'>Cofnij ostatni klik</button>" +
       "<button type='button' data-akcja='usun'>Usuń</button>" +
       "<button type='button' class='zakoncz' data-akcja='zakoncz'>Zakończ</button></div>";
 
@@ -221,6 +222,10 @@
       b.addEventListener("click", function () {
         if (b.dataset.przesun === "ok") { stan.edycja = null; rysuj(); return; }
         try {
+          if (b.dataset.przesun === "usun") {
+            stan.otwarte[i] = P.usunZdarzenie(stan.otwarte[i], stan.edycja.kod); stan.edycja = null;
+            zapisz(); rysuj(); return;
+          }
           stan.otwarte[i] = P.przesun(stan.otwarte[i], stan.edycja.kod, Number(b.dataset.przesun) * 1000);
           zapisz(); rysuj();
         } catch (e) { kom.textContent = e.message; }
@@ -333,6 +338,8 @@
     // w polu sama nazwa (30.09) - kierunek pokazuja przyciski pod spodem
     stan.nazwaPrzystanku = poId[id] ? poId[id].n : "";
     stan.przystanekTekst = poId[id] ? poId[id].n : id;
+    // karty, w ktorych nic jeszcze nie zapisano, ida za zmiana przystanku (30.09)
+    stan.otwarte.forEach(function (o) { if (P.nietknieta(o)) o.przystanek = id; });
     stan.ostatnie = [id].concat((stan.ostatnie || []).filter(function (x) { return x !== id; })).slice(0, 6);
     document.getElementById("przystanek").value = stan.przystanekTekst;
     zapisz(); rysujSzybkie(); rysuj();
@@ -529,7 +536,10 @@
         if (p.nie_stanal) return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) +
           "</span><span>nie stan\u0105\u0142" + (p.t_minal ? " \u23f1" : "") + "</span></div>";
         return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) + "</span><span>+" + p.wsiadlo +
-          " \u2212" + p.wysiadlo + (o !== null ? " \u00b7 " + (p.obciazenie !== undefined && p.obciazenie !== "" ? "" : "\u2248") + o + " os." : "") +
+          " \u2212" + p.wysiadlo + (o !== null ? " \u00b7 " + (p.obciazenie !== undefined && p.obciazenie !== "" ? "" : "\u2248") + o + " os."
+            // liczba z innego zakresu niz liczniki (caly pojazd przy liczeniu czlonu) - tez widoczna (30.09)
+            : p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null ?
+              " \u00b7 " + p.obciazenie + " os. (" + (P.zakresObciazenia(p, j.zakres) === "caly" ? "ca\u0142y pojazd" : "cz\u0142on") + ")" : "") +
           (p.tlok ? " \u00b7 " + esc(etTlok(p.tlok)) : "") +
           P.ZNACZNIKI.map(function (z) {
             var d = P.trwanieZnacznika((p.znaczniki || {})[z[0]], p.t);
@@ -544,8 +554,10 @@
     el.querySelectorAll("[data-pole]").forEach(function (inp) {
       var ev = inp.tagName === "SELECT" ? "change" : "input";
       inp.addEventListener(ev, function () {
+        if (inp.dataset.pole === "zakres") {                 // wpisane liczby osob zostaja przy swoim zakresie
+          stan.przejazd = P.ustawZakres(stan.przejazd, inp.value.trim()); zapisz(); rysujJazde(); return;
+        }
         stan.przejazd[inp.dataset.pole] = inp.value.trim(); zapisz();
-        if (inp.dataset.pole === "zakres") rysujJazde();     // domyslny zakres liczby osob i szacunek
       });
     });
     // linia zmienia liste kierunkow - przerysuj po zejsciu z pola, nie w trakcie pisania
@@ -622,6 +634,11 @@
     el.querySelectorAll("[data-przesun]").forEach(function (bt) {
       bt.addEventListener("click", function () {
         if (bt.dataset.przesun === "ok") { stan.edycjaJ = null; rysujJazde(); return; }
+        if (bt.dataset.przesun === "usun") {
+          var kod = stan.edycjaJ; stan.edycjaJ = null;
+          zmienPrzejazd(function (x) { return Object.assign({}, x, { biezacy: P.usunZdarzenie(x.biezacy, kod) }); });
+          return;
+        }
         zmienPrzejazd(function (x) { return P.przesunJazdy(x, stan.edycjaJ, Number(bt.dataset.przesun) * 1000); });
       });
     });

@@ -88,6 +88,9 @@
     }
     if (kod === "rusz2" && obs.czasy.stop2 === undefined)
       throw new Error("najpierw „Stanął ponownie”");
+    // 30.09: przypadkowe "Stanal ponownie" przed "Ruszyl" zapisywalo sie bez ostrzezenia
+    if (kod === "stop2" && obs.czasy.rusz === undefined)
+      throw new Error("najpierw „Ruszył”");
     var c = {}; Object.keys(obs.czasy).forEach(function (k) { c[k] = obs.czasy[k]; });
     c[kod] = t;
     return Object.assign({}, obs, { czasy: c });
@@ -113,15 +116,37 @@
     }).join(" ");
   }
 
+  /* Skasowanie wybranego momentu (30.09: przypadkowe "Stanal ponownie" nie
+     dalo sie odznaczyc - "Cofnij" na dole karty nie bylo widac). Moment, od
+     ktorego zalezy pozniejszy, kasuje sie dopiero po nim. */
+  function usunZdarzenie(obs, kod) {
+    var c = obs.czasy || {};
+    if (c[kod] === undefined) return obs;
+    if (kod === "stop2" && c.rusz2 !== undefined) throw new Error("najpierw usu\u0144 „Ruszył ponownie”");
+    if (kod === "rusz" && c.stop2 !== undefined) throw new Error("najpierw usu\u0144 „Stanął ponownie”");
+    var cz = Object.assign({}, c); delete cz[kod];
+    var kor = Object.assign({}, obs.korekty || {}); delete kor[kod];
+    var zn = Object.assign({}, obs.znaczniki || {}), m = zn.czeka;
+    // czekanie wznowione przez kasowane "Stanal ponownie" - zostaje pierwszy odcinek
+    if (kod === "stop2" && m && m.suma !== undefined && m.od === c.stop2) zn.czeka = Object.assign({}, m, { do: m.od });
+    return Object.assign({}, obs, { czasy: cz, korekty: kor, znaczniki: zn });
+  }
+
+  /* Karta, w ktorej nic jeszcze nie zapisano - idzie za zmiana przystanku
+     (30.09: po zmianie duzym przyciskiem trzeba bylo zmieniac drugi raz w karcie). */
+  function nietknieta(obs) {
+    return !obs.linia && !obs.pojazd && !Object.keys(obs.czasy || {}).length && !obs.wsiadlo && !obs.wysiadlo &&
+      !obs.uwagi && !obs.tlok && !Object.keys(obs.znaczniki || {}).length &&
+      !Object.keys(obs.flagi || {}).some(function (k) { return obs.flagi[k]; });
+  }
+
   /* Cofniecie ostatnio zapisanego (najpozniejszego) zdarzenia. */
   function cofnij(obs) {
     var ost = null;
     Object.keys(obs.czasy).forEach(function (k) {
       if (ost === null || obs.czasy[k] >= obs.czasy[ost]) ost = k;
     });
-    if (ost === null) return obs;
-    var c = {}; Object.keys(obs.czasy).forEach(function (k) { if (k !== ost) c[k] = obs.czasy[k]; });
-    return Object.assign({}, obs, { czasy: c });
+    return ost === null ? obs : usunZdarzenie(obs, ost);
   }
 
   /* Czy obserwacja nadaje sie do porownania z GPS: wymagane linia, numer
@@ -240,12 +265,23 @@
   function znacznik(o, kod, t) {
     if (!ZNACZNIKI.some(function (z) { return z[0] === kod; })) throw new Error("nieznany znacznik: " + kod);
     var z = Object.assign({}, o.znaczniki || {}), x = z[kod], c = o.czasy || {};
+    // drugie zatrzymanie trwa (30.09): czekanie liczy sie od "Stanal ponownie"
+    var drugie = kod === "czeka" && c.stop2 !== undefined && c.rusz2 === undefined;
     if (!x) {
-      var od = kod === "czeka" && c.zamk !== undefined && c.zamk <= t ? c.zamk : t;
-      z[kod] = kod === "czeka" && c.rusz !== undefined ? { od: od, do: Math.max(c.rusz, od) } : { od: od };
+      var od = drugie ? Math.min(c.stop2, t)
+        : kod === "czeka" && c.zamk !== undefined && c.zamk <= t ? c.zamk : t;
+      z[kod] = !drugie && kod === "czeka" && c.rusz !== undefined ? { od: od, do: Math.max(c.rusz, od) } : { od: od };
     } else if (x.do === undefined) z[kod] = Object.assign({}, x, { do: Math.max(t, x.od) });
+    else if (drugie && x.do <= c.stop2) z[kod] = _wznow(x, c.stop2);
     else delete z[kod];
     return Object.assign({}, o, { znaczniki: z });
+  }
+
+  // kolejny odcinek tego samego znacznika: zamkniety czas idzie do `suma`
+  function _wznow(x, t) {
+    var y = Object.assign({}, x, { suma: (x.suma || 0) + (x.do - x.od), od: t });
+    delete y.do;
+    return y;
   }
 
   /* Powod czekania: dotkniecie ustawia, drugie tego samego kasuje. Bez
@@ -268,10 +304,19 @@
     return Object.assign({}, o, { znaczniki: z });
   }
 
-  /* Zapis zdarzenia z zamknieciem znacznikow na "Ruszyl" - dla obu trybow. */
+  /* Zapis zdarzenia z zamknieciem znacznikow na "Ruszyl" - dla obu trybow.
+     30.09 (Zeromskiego, Zamek): pojazd po wymianie czeka, podjezdza kilka
+     metrow i czeka dalej - "czeka po wymianie" konczylo sie na "Ruszyl"
+     i gubilo drugie czekanie. Teraz "Stanal ponownie" wznawia zapisane
+     czekanie (ten sam powod), "Ruszyl ponownie" je konczy; czas = suma obu
+     odcinkow (bez podjazdu miedzy nimi). */
   function zdarzenie(o, kod, t) {
     var x = zapisz(Object.assign({ czasy: {} }, o), kod, t);
-    return kod === "rusz" ? zamknijZnaczniki(x, t) : x;
+    if (kod === "rusz" || kod === "rusz2") return zamknijZnaczniki(x, t);
+    var cz = (x.znaczniki || {}).czeka;
+    if (kod === "stop2" && cz && cz.do !== undefined)
+      return Object.assign({}, x, { znaczniki: Object.assign({}, x.znaczniki, { czeka: _wznow(cz, t) }) });
+    return x;
   }
 
   /* Drzwi otwarte ponownie (29.09, autor): pasazer otwiera je jeszcze raz,
@@ -307,7 +352,7 @@
   function trwanieZnacznika(x, koniec) {
     if (!x) return null;
     var k = x.do !== undefined ? x.do : koniec;
-    return k === undefined ? null : Math.round((k - x.od) / 100) / 10;
+    return k === undefined ? null : Math.round(((x.suma || 0) + k - x.od) / 100) / 10;
   }
 
   /* Liczba osob w pojezdzie PO odjezdzie z przystanku (27.09, prosba autora):
@@ -364,9 +409,22 @@
     if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
     var ost = prz.postoje[prz.postoje.length - 1];
     if (ost && ost.t > t) throw new Error("czas wcze\u015bniejszy ni\u017c poprzedni zapis");
-    var p = Object.assign({}, prz.biezacy, { t: t });
+    var p = _zamrozZakres(Object.assign({}, prz.biezacy, { t: t }), prz.zakres);
     return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
                                     biezacy: _pusty(nastepny(prz.trasa, p.przystanek)) });
+  }
+
+  /* Zakres wpisanej liczby osob zapisuje sie razem z nia (30.09): policzony
+     caly pojazd przy wejsciu, potem zmiana "Liczone" na czlon - domyslny
+     zakres liczby szedl za zmiana i 76 osob stawalo sie liczba dla czlonu. */
+  function _zamrozZakres(p, zakres) {
+    var jest = p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null;
+    return jest && !p.obciazenie_zakres ? Object.assign({}, p, { obciazenie_zakres: zakresObciazenia(p, zakres) }) : p;
+  }
+
+  function ustawZakres(prz, zakres) {
+    return Object.assign({}, prz, { zakres: zakres, biezacy: _zamrozZakres(prz.biezacy, prz.zakres),
+      postoje: prz.postoje.map(function (p) { return _zamrozZakres(p, prz.zakres); }) });
   }
 
   /* Zegar postoju w jezdzie (28.09, opcjonalny): Stanal / Drzwi otwarte /
@@ -562,7 +620,8 @@
   }
 
   return { ROLE: ROLE, widoczne: widoczne, CZESC: CZESC, przesunJazdy: przesunJazdy,
-           nieStanal: nieStanal, naZadanie: naZadanie, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
+           nieStanal: nieStanal, naZadanie: naZadanie, usunZdarzenie: usunZdarzenie, nietknieta: nietknieta,
+           ustawZakres: ustawZakres, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
