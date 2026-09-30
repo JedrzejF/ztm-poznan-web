@@ -80,6 +80,13 @@ bez końca trwa do „Ruszył”.
   zablokowany** (samochód na pasie, nie może wyjechać) **/ na czas / inne**.
   „Na czas” tylko, gdy oczywiste (np. > 10 s z otwartymi drzwiami bez
   wymiany) — 4–6 s i tak nie odróżnimy od zwykłego postoju.
+  **Z drugim zatrzymaniem (od 30.09):** pojazd po wymianie czeka, podjeżdża
+  kilka metrów i czeka dalej (Żeromskiego, Zamek) — „Stanął ponownie” samo
+  wznawia zapisane czekanie (ten sam powód), „Ruszył ponownie” je kończy;
+  `z_czeka_s` = suma obu odcinków bez podjazdu. „czeka” dotknięte dopiero
+  w trakcie drugiego zatrzymania liczy się od „Stanął ponownie”. W plikach
+  do 30.09 rano czekanie kończyło się na „Ruszył” — łączny czas to
+  `z_czeka_s + (t_rusz2 − t_stop2)`.
 - **kolejka przed peronem** — pojazd **całkiem stanął** w kolejce **do tego
   peronu**: najwyżej ~50 m przed nim (długość tramwaju + zapas) i **bez
   skrzyżowania po drodze**. Zatrzymania dalej — na światłach, rondzie,
@@ -118,6 +125,14 @@ kierunek nie jest wybrany, „+ Pojazd” o niego prosi; po wyborze lista zwija
 się do jednego przycisku + „zmień kierunek”. „Ostatnio” — ostatnio używane
 przystanki. Numer słupka nie jest pokazywany (zapisuje się sam); wpisanie
 samego numeru w pole nadal wybiera słupek.
+
+**Pomyłki (od 30.09):** dotknięcie zapisanego momentu otwiera korektę ±s
+i **✕ usuń ten moment** (przypadkowe „Stanął ponownie”); „Stanął ponownie”
+działa dopiero po „Ruszył”. Karta, w której nic jeszcze nie zapisano, sama
+przechodzi na nowo wybrany przystanek. Liczba osób w pojeździe zostaje przy
+zakresie, w którym ją wpisano (cały pojazd / człon) — późniejsza zmiana
+„Liczone” jej nie przestawia; liczba z innego zakresu niż liczniki jest na
+liście z dopiskiem, ale nie prowadzi szacunku.
 
 ## Dwie osoby, role (28.09)
 
