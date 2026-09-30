@@ -2,7 +2,7 @@
  * Sama (bez drugiej osoby) W. jezdzi tylko autobusami; tramwajem wolno 9/11
  * na odcinku Piatkowska - Most Teatralny (ruch do ogarniecia w pojedynke).
  * Uzywany przez notatnik (pomiar.html, przycisk "Plan dnia") i przez
- * plan-dnia.html. Godziny z rozkladu ZTM (wersja 24.09, z objazdami). */
+ * plan-dnia.html. Godziny z rozkladu ZTM (wersja 29.09, wazna od 30.09). */
 (function () {
   "use strict";
   var DANE = {
@@ -11,9 +11,9 @@
     // od, do, kto, gdzie, tryb, uwagi
     wiersze: [
       ["13:15", "13:45", "W.+G.", "Fredry 117 → Gwarna (bez świateł)", "przystanek", "W.: zegar + przód · G.: tylko liczenie, środek i tył"],
-      ["13:45", "14:05", "W.+G.", "Fredry 118 → Most Teatralny (światło 25 m)", "przystanek", "jak wyżej; czeka po wymianie → światło"],
-      ["14:06", "14:15", "W.+G.", "Tramwaj 8: Fredry 118 → Żeromskiego 61", "jazda", "oboje zegar; zapas 14:16"],
-      ["14:15", "14:35", "W.+G.", "Żeromskiego 61 → Ogrody (bez świateł)", "przystanek", "razem; dwa pojazdy naraz: W. przedni, G. tylny"],
+      ["13:45", "14:08", "W.+G.", "Fredry 118 → Most Teatralny (światło 25 m)", "przystanek", "jak wyżej; czeka po wymianie → światło"],
+      ["14:10", "14:19", "W.+G.", "Tramwaj 8: Fredry 118 → Żeromskiego 61", "jazda", "oboje zegar; zapas 14:20"],
+      ["14:19", "14:38", "W.+G.", "Żeromskiego 61 → Ogrody (bez świateł)", "przystanek", "razem; dwa pojazdy naraz: W. przedni, G. tylny"],
       ["14:40", "15:05", "W.+G.", "Żeromskiego 60 (światło 3 m)", "przystanek", "jak wyżej; potem wróćcie na 61"],
       ["15:13", "15:19", "W.+G.", "Autobus 193: Żeromskiego 61 → Swoboda", "jazda", "oboje zegar; W. wysiada na Swobodzie, G. jedzie dalej"],
       ["15:19", "15:33", "W.", "Swoboda 628 → Bułgarska/Polska", "przystanek", "~20 autobusów/h"],
