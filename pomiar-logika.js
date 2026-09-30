@@ -396,6 +396,27 @@
     return Object.assign({}, prz, { biezacy: b });
   }
 
+  /* Etykiety przystankow trasy w trybie jazdy (30.09): sama nazwa - kierunek
+     slupka ("Uniwersytet Ekonomiczny -> Zamek") bywa inny niz trasa tej
+     linii i myli. Dopisek tylko, gdy nazwa jest na trasie wiecej niz raz:
+     slupki po kolei (Rondo Rataje) - "(1. slupek)", "(2. slupek)";
+     powrot w to samo miejsce (petla, Admiralska) - "-> nastepny przystanek
+     trasy". `nazwy` - nazwy kolejnych przystankow trasy. */
+  function etykietyTrasy(nazwy) {
+    var ile = {};
+    nazwy.forEach(function (n) { ile[n] = (ile[n] || 0) + 1; });
+    return nazwy.map(function (n, i) {
+      if (ile[n] < 2) return n;
+      var a = i, b = i;                                  // ciag tej samej nazwy wokol i
+      while (a > 0 && nazwy[a - 1] === n) a--;
+      while (b + 1 < nazwy.length && nazwy[b + 1] === n) b++;
+      var e = n;
+      if (b - a + 1 < ile[n]) e += " \u2192 " + (b + 1 < nazwy.length ? nazwy[b + 1] : "koniec trasy");
+      if (b > a) e += " (" + (i - a + 1) + ". s\u0142upek)";
+      return e;
+    });
+  }
+
   /* Nastepny przystanek na trasie po `id`; "" gdy koniec trasy albo `id`
      poza trasa (objazd, wpis reczny) - wtedy wybiera sie recznie. */
   function nastepny(trasa, id) {
@@ -625,7 +646,7 @@
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
-           nastepny: nastepny, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
+           nastepny: nastepny, etykietyTrasy: etykietyTrasy, dalej: dalej, pomin: pomin, cofnijDalej: cofnijDalej,
            tenSamPrzystanek: tenSamPrzystanek, slupkiNazwy: slupkiNazwy, nazwyZWynikow: nazwyZWynikow,
            etykietaKierunku: etykietaKierunku, szacujObciazenie: szacujObciazenie,
            zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,

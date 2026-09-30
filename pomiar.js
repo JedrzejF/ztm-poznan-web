@@ -454,6 +454,9 @@
     var zObc = P.zakresObciazenia(b, j.zakres);
     var cz = b.czasy || {};
     var trasa = j.trasa || [];
+    // w jezdzie sama nazwa przystanku; dopisek tylko przy powtorzonej nazwie (30.09)
+    var sama = function (id) { return poId[id] ? poId[id].n : (id || "\u2014"); };
+    var etTrasy = P.etykietyTrasy(trasa.map(sama));
     var wid = P.widoczne(j.rola);
     // na zadanie (30.09): "Nie stanal" na gorze karty, dopoki nie zapisano
     // "Stanal"; na zwyklym przystanku tych przyciskow nie ma
@@ -475,8 +478,8 @@
       "<div class='biezacy'><span class='drobny'>Przystanek</span>" +
       (trasa.length ? "<select data-przyst>" +
         (trasa.indexOf(b.przystanek) < 0 ? "<option value='" + esc(b.przystanek) + "' selected>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014 wybierz \u2014") + "</option>" : "") +
-        trasa.map(function (id) {
-          return "<option value='" + esc(id) + "'" + (id === b.przystanek ? " selected" : "") + ">" + esc(nazwa(id)) + "</option>";
+        trasa.map(function (id, k) {
+          return "<option value='" + esc(id) + "'" + (id === b.przystanek ? " selected" : "") + ">" + esc(etTrasy[k]) + "</option>";
         }).join("") + "</select>"
         : "<b>" + esc(b.przystanek ? nazwa(b.przystanek) : "\u2014") + "</b>") +
       (nz ? "<span class='drobny nz'>na \u017c\u0105danie</span>" : "") +
@@ -533,9 +536,9 @@
       "<details><summary>Uwagi</summary><input type='text' data-pole='uwagi' value='" + esc(j.uwagi) + "'></details>" +
       "<div class='lista' style='margin:10px 0 0'>" + j.postoje.map(function (p, k) { return [p, szPost[k]]; }).slice(-6).reverse().map(function (x) {
         var p = x[0], o = x[1];
-        if (p.nie_stanal) return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) +
+        if (p.nie_stanal) return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(sama(p.przystanek)) +
           "</span><span>nie stan\u0105\u0142" + (p.t_minal ? " \u23f1" : "") + "</span></div>";
-        return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(nazwa(p.przystanek)) + "</span><span>+" + p.wsiadlo +
+        return "<div class='wiersz'><span>" + hms(p.t).slice(0, 8) + " " + esc(sama(p.przystanek)) + "</span><span>+" + p.wsiadlo +
           " \u2212" + p.wysiadlo + (o !== null ? " \u00b7 " + (p.obciazenie !== undefined && p.obciazenie !== "" ? "" : "\u2248") + o + " os."
             // liczba z innego zakresu niz liczniki (caly pojazd przy liczeniu czlonu) - tez widoczna (30.09)
             : p.obciazenie !== undefined && p.obciazenie !== "" && p.obciazenie !== null ?
