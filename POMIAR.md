@@ -94,6 +94,13 @@ bez końca trwa do „Ruszył”.
   przystankami; GPS mierzy je sam, **nie zaznaczaj ich**. Samo zwolnienie
   (przepuszczenie pieszego bez zatrzymania) też nie. Próg z estymatora:
   GPS szuka postoju do 40 m od słupka.
+- **drzwi tylko odblokowane** (od 01.10) — kierowca odblokował drzwi
+  (zapala się przycisk), ale nikt ich nie otworzył, bo nikt nie wsiada ani
+  nie wysiada. Dotknij, gdy drzwi zostaną odblokowane, i drugi raz, gdy
+  zostaną zablokowane (gdy nie widać — nie dotykaj drugi raz, skończy się
+  samo na „Ruszył”). Wtedy **nie** naciskaj „Drzwi otwarte” / „Drzwi
+  zamknięte”. Jeśli ktoś jednak otworzy drzwi — naciśnij „Drzwi otwarte”
+  jak zwykle. CSV: `z_odblok_s`, `z_odblok_od`, `z_odblok_do` (na końcu).
 - **Stanął / Ruszył ponownie** (przyciski zegara) — to nie znacznik:
   pojazd ruszył i po kilku metrach stanął (światło tuż za peronem).
   Różnica wobec „czeka”: czy koła się ruszyły.

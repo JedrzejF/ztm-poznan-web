@@ -255,8 +255,13 @@
      przed  - kolejka do TEGO peronu: pojazd stanal calkiem, najwyzej ~50 m
               przed peronem (dlugosc tramwaju + zapas), bez skrzyzowania po
               drodze. Dalsze zatrzymania to czas jazdy - GPS mierzy je sam.
-              Prog z estymatora: GPS szuka postoju do 40 m od slupka. */
-  var ZNACZNIKI = [["czeka", "czeka po wymianie"], ["przed", "kolejka przed peronem"]];
+              Prog z estymatora: GPS szuka postoju do 40 m od slupka.
+     odblok - drzwi tylko odblokowane (01.10, D-046, autor): na postoju bez
+              pasazerow kierowca czesto tylko odblokowuje drzwi i nikt ich nie
+              otwiera. Stoper zamiast "Drzwi otwarte/zamkniete" - czas
+              odblokowania to wtedy odpowiednik czasu drzwi. */
+  var ZNACZNIKI = [["czeka", "czeka po wymianie"], ["przed", "kolejka przed peronem"],
+                   ["odblok", "drzwi tylko odblokowane"]];
   var POWODY = [["swiatlo", "\u015bwiat\u0142o"], ["blokada", "zablokowany"], ["czas", "na czas"], ["inne", "inne"]];
   // kolumny z_*_s w CSV przejazdow do 28.09 - zostaja (puste), zeby stare
   // pliki i nowe mialy ten sam uklad poczatku
@@ -644,7 +649,8 @@
     .concat(["wsiadlo", "wysiadlo", "drzwi_obs", "tlok", "uwagi", "utworzona", "korekty",
              "szacunek", "rola", "obserwator",
              "z_czeka_s", "z_czeka_powod", "z_przed_s", "ponowne_otw",
-             "z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"]);
+             "z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do",
+             "z_odblok_s", "z_odblok_od", "z_odblok_do"]);
 
   // czas znacznika [s] do CSV; niezamkniety - do `koniec`
   function _zs(o, kod, koniec) {
@@ -667,7 +673,9 @@
                  o.szac ? 1 : 0, o.rola || "", o.obserwator || "",
                  _zs(o, "czeka", o.czasy.rusz), _powod(o), _zs(o, "przed", o.czasy.rusz), o.ponowne_otw || 0]
           .concat(godzinyZnacznika((o.znaczniki || {}).przed, o.czasy.rusz))
-          .concat(godzinyZnacznika((o.znaczniki || {}).czeka, o.czasy.rusz2 !== undefined ? o.czasy.rusz2 : o.czasy.rusz)));
+          .concat(godzinyZnacznika((o.znaczniki || {}).czeka, o.czasy.rusz2 !== undefined ? o.czasy.rusz2 : o.czasy.rusz))
+          .concat([_zs(o, "odblok", o.czasy.rusz)])
+          .concat(godzinyZnacznika((o.znaczniki || {}).odblok, o.czasy.rusz)));
       w.push(r.map(csvPole).join(","));
     });
     return w.join("\n") + "\n";
@@ -680,7 +688,8 @@
     .concat(["korekty", "szacunek", "czesc", "rola", "obserwator"])
     .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"])
     .concat(["nie_stanal", "t_minal"])
-    .concat(["z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"]);
+    .concat(["z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"])
+    .concat(["z_odblok_s", "z_odblok_od", "z_odblok_do"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -700,6 +709,8 @@
           .concat([p.nie_stanal ? 1 : 0, p.t_minal])
           .concat(godzinyZnacznika((p.znaczniki || {}).przed, p.t))
           .concat(godzinyZnacznika((p.znaczniki || {}).czeka, p.t))
+          .concat([_zs(p, "odblok", p.t)])
+          .concat(godzinyZnacznika((p.znaczniki || {}).odblok, p.t))
           .map(csvPole).join(","));
       });
     });
