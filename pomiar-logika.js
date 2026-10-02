@@ -140,12 +140,16 @@
       !Object.keys(obs.flagi || {}).some(function (k) { return obs.flagi[k]; });
   }
 
-  /* Cofniecie ostatnio zapisanego (najpozniejszego) zdarzenia. */
+  /* Cofniecie ostatnio zapisanego (najpozniejszego) zdarzenia. "Drzwi
+     otwarte ponownie" klikniete po nim tez jest zdarzeniem - bez tego cofniecie
+     po pomylce kasowalo "Drzwi otwarte" (zamkniecie juz skasowane). */
   function cofnij(obs) {
     var ost = null;
     Object.keys(obs.czasy).forEach(function (k) {
       if (ost === null || obs.czasy[k] >= obs.czasy[ost]) ost = k;
     });
+    var pon = (obs.ponowne || [])[(obs.ponowne || []).length - 1];
+    if (pon && pon.t !== undefined && (ost === null || pon.t >= obs.czasy[ost])) return cofnijPonowne(obs);
     return ost === null ? obs : usunZdarzenie(obs, ost);
   }
 
@@ -370,15 +374,36 @@
      Czekanie biegnie dalej (30.09, Rondo Rataje: ponowne otwarcie w trakcie
      czerwonego kasowalo ~2 min czekania - pojazd nadal stoi przy peronie). Po "Ruszyl" (otwarcie po ruszeniu o kilka
      metrow) - tylko liczy; takie zatrzymanie to "Stanal/Ruszyl ponownie". */
-  function ponowneOtwarcie(o) {
+  function ponowneOtwarcie(o, t) {
     var x = Object.assign({}, o, { ponowne_otw: (o.ponowne_otw || 0) + 1 });
-    var c = o.czasy || {};
+    var c = o.czasy || {}, wpis = { t: t };
     if (c.zamk !== undefined && c.rusz === undefined) {
+      wpis.zamk = c.zamk;
+      if ((o.korekty || {}).zamk) wpis.kor = o.korekty.zamk;
       var cz = Object.assign({}, c); delete cz.zamk;
       var kor = Object.assign({}, o.korekty || {}); delete kor.zamk;
       x = Object.assign(x, { czasy: cz, korekty: kor });
     }
+    // skasowane zamkniecie zostaje do cofniecia (cofnijPonowne)
+    x.ponowne = (o.ponowne || []).concat([wpis]);
     return x;
+  }
+
+  /* Cofniecie ostatniego "drzwi otwarte ponownie" (02.10, 832/8313 i 16/601:
+     klikniete zamiast "Ruszyl" kasowalo zamkniecie bez powrotu). Skoro drzwi
+     nie otwarto ponownie, ostatnim domknieciem jest to sprzed klikniecia -
+     wraca z korekta, w miejsce zamkniecia zapisanego po nim. Kolejnosc
+     pilnowana jak przy zapisie. */
+  function cofnijPonowne(o) {
+    if (!o.ponowne_otw) return o;
+    var lista = o.ponowne || [], w = lista[lista.length - 1] || {};
+    var x = Object.assign({}, o, { ponowne_otw: o.ponowne_otw - 1, ponowne: lista.slice(0, -1) });
+    if (w.zamk === undefined) return x;
+    var cz = Object.assign({}, x.czasy); delete cz.zamk;
+    x = zapisz(Object.assign(x, { czasy: cz }), "zamk", w.zamk);
+    var kor = Object.assign({}, o.korekty || {}); delete kor.zamk;
+    if (w.kor) kor.zamk = w.kor;
+    return Object.assign(x, { korekty: kor });
   }
 
   function przelaczZnacznik(prz, kod, t) {
@@ -387,8 +412,11 @@
   function powodJazdy(prz, powod, t) {
     return Object.assign({}, prz, { biezacy: powodCzekania(prz.biezacy, powod, t) });
   }
-  function ponowneJazdy(prz) {
-    return Object.assign({}, prz, { biezacy: ponowneOtwarcie(prz.biezacy) });
+  function ponowneJazdy(prz, t) {
+    return Object.assign({}, prz, { biezacy: ponowneOtwarcie(prz.biezacy, t) });
+  }
+  function cofnijPonowneJazdy(prz) {
+    return Object.assign({}, prz, { biezacy: cofnijPonowne(Object.assign({ czasy: {} }, prz.biezacy)) });
   }
 
   /* Czas trwania znacznika [s]; niezamkniety liczony do `koniec` (Dalej). */
@@ -550,13 +578,16 @@
      (Admiralska 835/837: polowa postojow "przejazd", czasy z sekwencji
      i z kotwicy roznia sie o 50-80 s). minal = true: t to chwila minięcia
      slupka (znaku przystanku) - prawda do porownania z oboma czasami GPS.
-     Bez tego (latwo przeoczyc moment) - tylko fakt, t = chwila zapisu. */
+     Bez tego (latwo przeoczyc moment) - tylko fakt, t = chwila zapisu.
+     Podwojne dotkniecie jak przy "Dalej" (02.10, 832/8313: drugie 1,1 s po
+     pierwszym zapisalo przejazd przez nastepny przystanek). */
   function nieStanal(prz, t, minal) {
     if (!prz.biezacy.przystanek) throw new Error("wybierz przystanek");
     var c = prz.biezacy.czasy || {};
     if (c.stop !== undefined) throw new Error("zapisano „Stanął” — to nie przejazd (cofnij ↶)");
     var ost = prz.postoje[prz.postoje.length - 1];
     if (ost && ost.t > t) throw new Error("czas wcześniejszy niż poprzedni zapis");
+    if (ost && t - ost.t < PODWOJNE_MS) throw new Error("podwójne „Nie stanął” — pominięte");
     var p = Object.assign({}, prz.biezacy, { t: t, nie_stanal: true });
     if (minal) p.t_minal = t;
     return Object.assign({}, prz, { postoje: prz.postoje.concat([p]),
@@ -572,10 +603,12 @@
     return !!(p && l && (p.z || []).indexOf(l) >= 0);
   }
 
-  /* Cofniecie ostatniego "Dalej": postoj wraca do edycji z licznikami. */
+  /* Cofniecie ostatniego "Dalej": postoj wraca do edycji z licznikami.
+     Cofniety "Nie stanal" przestaje nim byc (02.10, 832/8313 Zlotkowo:
+     cofniety i normalnie policzony postoj zostawal w CSV przejazdem). */
   function cofnijDalej(prz) {
     if (!prz.postoje.length) return prz;
-    var p = Object.assign({}, prz.postoje[prz.postoje.length - 1]); delete p.t;
+    var p = Object.assign({}, prz.postoje[prz.postoje.length - 1]); delete p.t; delete p.nie_stanal; delete p.t_minal;
     return Object.assign({}, prz, { postoje: prz.postoje.slice(0, -1), biezacy: p });
   }
 
@@ -722,6 +755,7 @@
            ustawZakres: ustawZakres, przesunZnacznik: przesunZnacznik, usunZnacznik: usunZnacznik,
            godzinyZnacznika: godzinyZnacznika, POWODY: POWODY, znacznik: znacznik, powodCzekania: powodCzekania, zamknijZnaczniki: zamknijZnaczniki,
            zdarzenie: zdarzenie, ponowneOtwarcie: ponowneOtwarcie, powodJazdy: powodJazdy, ponowneJazdy: ponowneJazdy,
+           cofnijPonowne: cofnijPonowne, cofnijPonowneJazdy: cofnijPonowneJazdy,
            ZAKRES: ZAKRES, KOLUMNY_PRZEJAZDU: KOLUMNY_PRZEJAZDU, nowyPrzejazd: nowyPrzejazd,
            ustawTrase: ustawTrase, ustawPrzystanek: ustawPrzystanek, zliczPrzejazd: zliczPrzejazd,
            nastepny: nastepny, etykietyTrasy: etykietyTrasy, poprzedni: poprzedni,

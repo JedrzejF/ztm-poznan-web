@@ -4,11 +4,13 @@ Notatnik w telefonie: **https://jedrzejf.github.io/ztm-poznan-web/pomiar.html**
 
 ## Po co
 
-Postój liczony z GPS (co ~11,7 s) jest prawdopodobnie zawyżony o 5–8 s, bo
-metoda nie uwzględnia hamowania i ruszania (`CONTEXT.md` §11.2). Pomiar
-terenowy daje **prawdziwe** momenty zatrzymania i ruszenia dla konkretnych
-pojazdów. Porównanie z GPS pokaże, o ile metoda się myli — osobno dla
-tramwajów i autobusów, osobno dla przystanków ze światłami tuż za peronem.
+GPS podaje pozycję pojazdu co ~11,7 s, więc chwile zatrzymania i ruszenia
+trzeba z niego wyliczać — a wynik zależy od tego, jak pojazd hamuje i rusza.
+Pomiar na miejscu daje **prawdziwe** momenty zatrzymania, drzwi i ruszenia
+dla konkretnych pojazdów. Porównanie z GPS pokazuje, czy wyliczenie się zgadza,
+a czasy drzwi i liczba pasażerów — ile trwa najkrótszy postój i ile dokłada
+każda osoba. Osobno tramwaje i autobusy, osobno przystanki ze światłami tuż za
+peronem.
 
 ## Przygotowanie (raz)
 
@@ -31,7 +33,7 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
 |---|---|---|
 | **Stanął** | koła całkowicie się zatrzymały **przy peronie** | jeśli najpierw stał w kolejce przed peronem — znacznik „kolejka przed peronem” (niżej), a „Stanął” dopiero przy peronie |
 | **Drzwi otwarte** | **pierwsze** otwarcie dowolnych drzwi — przez kierowcę albo pasażera | nie koniec otwierania. Kierowca „zwolnił” drzwi, a pasażer otworzył je po 5 s → moment otwarcia przez pasażera (zwolnienia nie widać) |
-| **Drzwi zamknięte** | **ostatnie** domknięcie drzwi | ktoś otworzył je jeszcze raz → **↻ drzwi otwarte ponownie** (skasuje zapisane zamknięcie), potem „Drzwi zamknięte” jeszcze raz |
+| **Drzwi zamknięte** | **ostatnie** domknięcie drzwi | ktoś otworzył je jeszcze raz → **↻ drzwi otwarte ponownie** (skasuje zapisane zamknięcie), potem „Drzwi zamknięte” jeszcze raz. Kliknięte przez pomyłkę → **↶ cofnij ponowne** obok (zamknięcie wraca) |
 | **Ruszył** | koła ruszyły, pojazd zaczyna odjeżdżać | nie moment domknięcia drzwi |
 | **Stanął ponownie** | po ruszeniu staje jeszcze raz w obrębie przystanku (światło, do ~50 m) | tylko jeśli się zdarzy |
 | **Ruszył ponownie** | odjazd po drugim zatrzymaniu | |
@@ -68,7 +70,7 @@ wejść. Na pytania: „pomiar do pracy dyplomowej o punktualności”.
    wpuścił dobiegającego) → także **↻ drzwi otwarte ponownie**.
 8. Pojazd odjechał → **Zakończ**. Karta znika do listy „Zakończone”.
 
-## Znaczniki (oba tryby, 29.09)
+## Znaczniki (oba tryby)
 
 Każdy znacznik mierzy czas: 1. dotknięcie start, 2. koniec, 3. kasuje;
 bez końca trwa do „Ruszył”.
@@ -80,7 +82,7 @@ bez końca trwa do „Ruszył”.
   zablokowany** (samochód na pasie, nie może wyjechać) **/ na czas / inne**.
   „Na czas” tylko, gdy oczywiste (np. > 10 s z otwartymi drzwiami bez
   wymiany) — 4–6 s i tak nie odróżnimy od zwykłego postoju.
-  **Z drugim zatrzymaniem (od 30.09):** pojazd po wymianie czeka, podjeżdża
+  **Z drugim zatrzymaniem:** pojazd po wymianie czeka, podjeżdża
   kilka metrów i czeka dalej (Żeromskiego, Zamek) — „Stanął ponownie” samo
   wznawia zapisane czekanie (ten sam powód), „Ruszył ponownie” je kończy;
   `z_czeka_s` = suma obu odcinków bez podjazdu. „czeka” dotknięte dopiero
@@ -94,7 +96,7 @@ bez końca trwa do „Ruszył”.
   przystankami; GPS mierzy je sam, **nie zaznaczaj ich**. Samo zwolnienie
   (przepuszczenie pieszego bez zatrzymania) też nie. Próg z estymatora:
   GPS szuka postoju do 40 m od słupka.
-- **drzwi tylko odblokowane** (od 01.10) — kierowca odblokował drzwi
+- **drzwi tylko odblokowane** — kierowca odblokował drzwi
   (zapala się przycisk), ale nikt ich nie otworzył, bo nikt nie wsiada ani
   nie wysiada. Dotknij, gdy drzwi zostaną odblokowane, i drugi raz, gdy
   zostaną zablokowane (gdy nie widać — nie dotykaj drugi raz, skończy się
@@ -122,7 +124,7 @@ jeden, drugi pomiń (lepiej mniej, a pewnie).
 **Poprawki po fakcie:** lista „Zakończone” pokazuje godzinę, linię, pojazd
 i przystanek. Stuknięcie wiersza otwiera obserwację ponownie do edycji.
 
-**Przystanek w dwóch krokach (od 30.09):** 1. w polu (niebieskie) wpisz
+**Przystanek w dwóch krokach:** 1. w polu (niebieskie) wpisz
 nazwę i wybierz ją z listy — każda nazwa raz; 2. pod spodem bursztynowe
 przyciski **Kierunek** (pod paskiem, nie w nim), jeden na słupek: „w stronę:”
 następny przystanek o innej nazwie (na węzłach typu Rondo Rataje kursy
@@ -133,21 +135,23 @@ się do jednego przycisku + „zmień kierunek”. „Ostatnio” — ostatnio u
 przystanki. Numer słupka nie jest pokazywany (zapisuje się sam); wpisanie
 samego numeru w pole nadal wybiera słupek.
 
-**Znaczniki — godziny i korekta (od 30.09 wieczorem):** zapisany (zamknięty)
+**Znaczniki — godziny i korekta:** zapisany (zamknięty)
 znacznik po dotknięciu pokazuje korektę **±s początku** (kolejkę zwykle
 zauważasz później, niż się zaczęła) i **✕ usuń znacznik**. CSV ma na końcu
 godziny początku i końca: `z_przed_od`, `z_przed_do`, `z_czeka_od`,
 `z_czeka_do` (ms od epoki) — kolejkę da się porównać z GPS. „Drzwi otwarte
-ponownie” kasuje tylko „Drzwi zamknięte”; czekanie biegnie dalej.
+ponownie” kasuje tylko „Drzwi zamknięte”; czekanie biegnie dalej. Pomyłkę
+cofa **↶ cofnij ponowne** obok — pokazuje zamknięcie, które wróci, działa też
+po „Ruszył”; „Cofnij” zaraz po pomyłce robi to samo.
 
-**Jazda — pomyłki (od 30.09 wieczorem):** **◀** obok listy przystanków cofa
+**Jazda — pomyłki:** **◀** obok listy przystanków cofa
 o jeden przystanek trasy (przypadkowe „Dalej” albo „Nie stanął” — zamiast
-szukania na liście). Drugie „Dalej” szybciej niż 1,5 s po pierwszym jest
-pomijane (podwójne dotknięcie). Zmiana linii w trwającym przejeździe pyta,
+szukania na liście). Drugie „Dalej” albo „Nie stanął” szybciej niż 1,5 s po
+poprzednim zapisie jest pomijane (podwójne dotknięcie). Zmiana linii w trwającym przejeździe pyta,
 czy zakończyć go i zacząć nowy — przesiadka to nowy przejazd, od bieżącego
 przystanku.
 
-**Pomyłki (od 30.09):** dotknięcie zapisanego momentu otwiera korektę ±s
+**Pomyłki:** dotknięcie zapisanego momentu otwiera korektę ±s
 i **✕ usuń ten moment** (przypadkowe „Stanął ponownie”); „Stanął ponownie”
 działa dopiero po „Ruszył”. Karta, w której nic jeszcze nie zapisano, sama
 przechodzi na nowo wybrany przystanek. Liczba osób w pojeździe zostaje przy
@@ -155,7 +159,7 @@ zakresie, w którym ją wpisano (cały pojazd / człon) — późniejsza zmiana
 „Liczone” jej nie przestawia; liczba z innego zakresu niż liczniki jest na
 liście z dopiskiem, ale nie prowadzi szacunku.
 
-## Dwie osoby, role (28.09)
+## Dwie osoby, role
 
 Pod przełącznikiem trybu: **zegar + liczenie** (jedna osoba, domyślnie),
 **tylko zegar**, **tylko liczenie** oraz pole na **inicjały**. Rola chowa
@@ -193,7 +197,7 @@ i „Ruszył”, nie licz (albo podzielcie się rolami, wyżej).
   **−** poprawia pomyłkę.
 - **Zapełnienie** jednym dotknięciem: luźno / siedzenia zajęte / stoją.
 
-Pliki `Wymiana_pasazerska_*.xlsx` (sprawdzone 27.09) to dane UTK o **stacjach
+Pliki `Wymiana_pasazerska_*.xlsx` to dane UTK o **stacjach
 kolejowych** w Polsce — nie dotyczą przystanków ZTM. Wymianę na przystankach
 daje tylko własne liczenie (tryb „Jadę pojazdem” — dużo postojów na godzinę).
 
@@ -225,10 +229,10 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    drzwiami albo przy kabinie), kierunek (przyciski „→ cel” z rozkładu).
 2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
    notatnik sam przechodzi na kolejny. (Wyszukiwarka tylko, gdy linii nie ma
-   w danych — objazd poza trasą jest zbyt rzadki, 28.09.)
-   **Zegar postoju** (niebieski, na górze — 28.09: podstawa trybu, nie
+   w danych — objazd poza trasą jest zbyt rzadki.)
+   **Zegar postoju** (niebieski, na górze — podstawa trybu, nie
    dodatek): Stanął / Drzwi otwarte / Drzwi zamknięte / Ruszył, pod nimi
-   Stanął ponownie / Ruszył ponownie i ↻ drzwi otwarte ponownie — jak na
+   Stanął ponownie / Ruszył ponownie, niżej osobno ↻ drzwi otwarte ponownie — jak na
    przystanku, zapisuje się do bieżącego przystanku. „Stanął”, gdy bieżący
    już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego przystanku,
    nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie. **Dotknięcie
@@ -243,12 +247,11 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    ciągnie się tylko od liczby z tym samym zakresem co liczniki.
 4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej.
    **Zapełnienie** (luźno / siedzenia / stoją / ścisk) jest zwinięte — tylko
-   gdy nie liczysz osób; przy liczbie osób nic nie dodaje (28.09).
+   gdy nie liczysz osób; przy liczbie osób nic nie dodaje.
    **Znaczniki** — jak na przystanku (rozdział „Znaczniki” wyżej): czeka po
-   wymianie (+ powód), kolejka przed peronem, drugi przy peronie. Dawne
-   „czeka na czas” i „światło za przystankiem” (27–28.09) zastąpione:
-   czekanie przy peronie to „czeka” z powodem, drugie zatrzymanie kilka
-   metrów dalej to „Stanął/Ruszył ponownie”.
+   wymianie (+ powód), kolejka przed peronem, drugi przy peronie. Czekanie
+   przy peronie to „czeka” z powodem, drugie zatrzymanie kilka metrów dalej
+   to „Stanął/Ruszył ponownie”.
 
    **Notatka do tego przystanku** — krótki tekst przypięty do przystanku
    (np. „dobiegł pasażer”), zamiast uwag do całego przejazdu.
@@ -269,7 +272,7 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    słupek TERAZ** (kolumna `t_minal`). Nie musisz — łatwo przeoczyć; sam fakt
    „nie stanął” też się liczy. Po co: na przystankach na żądanie GPS często
    nie widzi, czy pojazd stanął, i dwie metody liczenia czasu jazdy różnią się
-   tam o minutę (835/837, Admiralska — 29.09). Pomyłka → **Cofnij „Dalej”** (postój wraca do edycji).
+   tam o minutę (835/837, Admiralska). Pomyłka → **Cofnij „Dalej”** (postój wraca do edycji i przestaje być „nie stanął”).
 7. Wysiadasz → **Zakończ przejazd**.
 
 Do GPS dopasowuje przede wszystkim przystanek i kolejność; czasy tylko
@@ -290,21 +293,13 @@ wcześniej — wtedy po prostu **Zakończ**.
 Na boku i z przodu pojazdu: **3 cyfry tramwaj, 4 cyfry autobus**. To klucz do
 dopasowania z GPS — obserwacja bez numeru jest bezużyteczna. Linię też wpisz.
 
-## Po co jeszcze obserwacje „na przystanku” (27.09)
-
-Z 15 czystych obserwacji skalibrowano poprawkę hamowania i ruszania
-(D-039): a = 0,73 m/s², ale 95% przedział 0,64–2,05 — poprawka postoju
-w sieci 3–7 s. **~50–70 obserwacji** zawęzi przedział mniej więcej o połowę;
-najlepiej po równo tramwaje i autobusy (osobne `a`), w odkrytym terenie
-(nie Piaśnicka — tunel). Przetrzymania i wymianę dają przejazdy.
-
 ## Plan próby
 
 **Cel: co najmniej 35 kompletnych obserwacji w każdej z 4 grup**
 (tramwaj / autobus × bez świateł / światło tuż za przystankiem), razem ok. 150.
 
 Dlaczego 35: różnica „GPS − teren” dla jednego pojazdu ma rozrzut ~5 s, więc
-35 obserwacji daje błąd średniej ~0,8 s wobec spodziewanego obciążenia 5–8 s.
+35 obserwacji daje błąd średniej ~0,8 s.
 Zapas ponad 30 na ~15% obserwacji, których nie da się dopasować.
 
 Miejsca wybrane tak, że **oba kierunki jednej pary przystanków** trafiają do
@@ -314,7 +309,7 @@ różnych grup — te same warunki ruchu, różnica tylko w świetle:
 |---|---|---|---|---|
 | 1 | **Fredry** (tramwaje) | 117 → Gwarna (bez świateł), 118 → Most Teatralny (światło 25 m za) | dzień roboczy 10:00–12:00 | ~24 |
 | 2 | Fredry | j.w. | dzień roboczy 15:00–17:00 | ~36 |
-| 3 | **Swoboda** (autobusy) | 628 → Bułgarska/Polska (światło **39 m** za), 629 → Szpitalna (światło 31 m za) — **oba ze światłem** (poprawka 29.09, niżej) | 10:00–12:00 | ~20 |
+| 3 | **Swoboda** (autobusy) | 628 → Bułgarska/Polska (światło **39 m** za), 629 → Szpitalna (światło 31 m za) — **oba ze światłem** (niżej) | 10:00–12:00 | ~20 |
 | 4 | Swoboda | j.w. | 15:00–17:00 | ~21 |
 
 - Dni robocze, najlepiej wt–czw. Nie w dniu zmiany rozkładu.
@@ -330,13 +325,13 @@ różnych grup — te same warunki ruchu, różnica tylko w świetle:
 „światło za” jest. Klasyfikacja pochodzi z mapy OSM (stan z maja 2026)
 i automatycznej reguły (35 m) — Twoje oko jest dokładniejsze.
 
-**Poprawka 29.09 (autor, potwierdzone w OSM):** za 628 też jest sygnalizacja,
-39 m za słupkiem — reguła 35 m wrzuciła ją do „bez świateł”. Swoboda nie
-jest więc parą światło / brak, tylko 31 m / 39 m. Porównanie z przystankiem
+**Swoboda nie jest parą światło / brak**, tylko 31 m / 39 m: za 628 też jest
+sygnalizacja, 39 m za słupkiem (potwierdzone w OSM — automatyczna reguła 35 m
+jej nie objęła). Porównanie z przystankiem
 bez świateł daje za to **Małe Garbary 1131** (brak sygnalizacji do 80 m)
 wobec **Grochowe Łąki 1130** (19 m) — autobusy, ~21 pojazdów/h. Na Swobodzie
 koszt światła mierzy wprost znacznik **„czeka po wymianie” z powodem
-„światło”** — bez grupy kontrolnej. Pozostałe pary sprawdzone w OSM 29.09:
+„światło”** — bez grupy kontrolnej. Pozostałe pary sprawdzone w OSM:
 Fredry 117 brak do 80 m / 118 25 m; Poznańska 8 brak / 7 5 m; Kórnicka
 158 brak za peronem / 159 11 m.
 

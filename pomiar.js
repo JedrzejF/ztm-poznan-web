@@ -84,9 +84,15 @@
     return !!(x && x.do !== undefined &&
       !(kod === "czeka" && c.stop2 !== undefined && c.rusz2 === undefined && x.do <= c.stop2));
   }
+  // wlasny wiersz pod zegarem, nie pod "Ruszyl" (02.10: klikane zamiast niego);
+  // obok cofniecie ostatniego - pokazuje zamkniecie, ktore wroci
   function ponowneHtml(o) {
-    return "<button type='button' class='ponowne' data-ponowne>\u21bb drzwi otwarte ponownie" +
-      (o.ponowne_otw ? " <b>\u00d7" + o.ponowne_otw + "</b>" : "") + "</button>";
+    var lista = o.ponowne || [], w = lista[lista.length - 1] || {};
+    return "<div class='ponowne-wiersz'><button type='button' class='ponowne' data-ponowne>\u21bb drzwi otwarte ponownie" +
+      (o.ponowne_otw ? " <b>\u00d7" + o.ponowne_otw + "</b>" : "") + "</button>" +
+      (o.ponowne_otw ? "<button type='button' class='ponowne cofnij-ponowne' data-ponowne-cofnij>\u21b6 cofnij ponowne" +
+        (w.zamk !== undefined ? "<small>drzwi zamkni\u0119te " + hms(w.zamk).slice(0, 8) + "</small>" : "") + "</button>" : "") +
+      "</div>";
   }
 
   function wczytaj() {
@@ -240,9 +246,11 @@
       });
     });
     el.querySelector("[data-ponowne]").addEventListener("click", function () {
-      if (navigator.vibrate) navigator.vibrate(20);
-      zmienObs(P.ponowneOtwarcie);
+      var t = Date.now(); if (navigator.vibrate) navigator.vibrate(20);
+      zmienObs(function (o) { return P.ponowneOtwarcie(o, t); });
     });
+    var cp = el.querySelector("[data-ponowne-cofnij]");
+    if (cp) cp.addEventListener("click", function () { zmienObs(P.cofnijPonowne); });
     el.querySelectorAll("[data-flaga]").forEach(function (cb) {
       cb.addEventListener("change", function () { stan.otwarte[i].flagi[cb.dataset.flaga] = cb.checked; zapisz(); });
     });
@@ -528,8 +536,9 @@
       "<div class='sekcja sek-zegar'" + (wid.zegar ? "" : " hidden") + "><div class='zegar-jazdy'>" +
       P.ZDARZENIA_JAZDY.slice(0, 4).map(przyciskZJ).join("") +
       "<button type='button' class='cofnij-zj' data-akcja='cofnij-zj' title='cofnij ostatnie zdarzenie'>\u21b6</button></div>" +
-      // drugie zatrzymanie kilka metrow za peronem (29.09 - jak na przystanku)
-      "<div class='zegar-jazdy2'>" + P.ZDARZENIA_JAZDY.slice(4).map(przyciskZJ).join("") + ponowneHtml(b) + "</div>" +
+      // drugie zatrzymanie kilka metrow za peronem (29.09 - jak na przystanku);
+      // pod "Ruszyl" teraz "Ruszyl ponownie" - pomylka odrzucona z komunikatem
+      "<div class='zegar-jazdy2'>" + P.ZDARZENIA_JAZDY.slice(4).map(przyciskZJ).join("") + "</div>" + ponowneHtml(b) +
       (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ]) : "") + "</div>" +
       // LICZENIE
       "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
@@ -650,9 +659,11 @@
       });
     });
     el.querySelector("[data-ponowne]").addEventListener("click", function () {
-      if (navigator.vibrate) navigator.vibrate(20);
-      zmienPrzejazd(P.ponowneJazdy);
+      var t = Date.now(); if (navigator.vibrate) navigator.vibrate(20);
+      zmienPrzejazd(function (x) { return P.ponowneJazdy(x, t); });
     });
+    var cpj = el.querySelector("[data-ponowne-cofnij]");
+    if (cpj) cpj.addEventListener("click", function () { zmienPrzejazd(P.cofnijPonowneJazdy); });
     el.querySelector("[data-drugi]").addEventListener("click", function () {
       zmienPrzejazd(function (x) {
         return Object.assign({}, x, { biezacy: Object.assign({}, x.biezacy, { drugi: !x.biezacy.drugi }) });

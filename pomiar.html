@@ -188,7 +188,7 @@
           border: 1px dashed var(--linia); background: var(--tlo); color: var(--tekst-2); }
   .szac.zrobione { border: 2px solid #1f9d55; color: var(--tekst); }
   /* 29.09: drugie zatrzymanie w jezdzie, ponowne otwarcie drzwi, powod czekania */
-  .zegar-jazdy2 { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 4px; margin-top: 4px; }
+  .zegar-jazdy2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
   .zegar-jazdy2 button { min-height: 46px; font: 600 12px/1.15 system-ui, sans-serif; border-radius: 8px; padding: 4px 2px;
                          border: 1px solid var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
   .zegar-jazdy2 button small { display: block; font: 500 10px/1.2 ui-monospace, Menlo, monospace; color: var(--tekst-2); }
@@ -196,7 +196,11 @@
   .zegar-jazdy2 button.zrobione small { color: #fff; }
   .ponowne { min-height: 40px; font: 600 12px/1.15 system-ui, sans-serif; border-radius: 8px; padding: 4px 6px;
              border: 1px dashed var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
-  .sek-zegar > .ponowne { width: 100%; margin-top: 6px; }
+  /* 02.10: wlasny wiersz (nie pod "Ruszyl"), obok cofniecie */
+  .ponowne-wiersz { display: flex; gap: 6px; margin-top: 8px; }
+  .ponowne-wiersz .ponowne { flex: 1; }
+  .ponowne-wiersz .cofnij-ponowne { flex: 0 0 45%; border-style: solid; }
+  .cofnij-ponowne small { display: block; font: 500 11px/1.2 ui-monospace, Menlo, monospace; color: var(--tekst-2); margin-top: 2px; }
   .znaczniki { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); margin-top: 0; }
   .powody span { flex-basis: 100%; }
   .powody { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: 12px; color: var(--tekst-2); }
@@ -248,7 +252,7 @@
 </div>
 
 <script src="plan.js?v=b4422aa6dc"></script>
-<script src="pomiar-logika.js?v=dab1da2d2d"></script>
-<script src="pomiar.js?v=fa2259427e"></script>
+<script src="pomiar-logika.js?v=ad82355834"></script>
+<script src="pomiar.js?v=1ffa210d54"></script>
 </body>
 </html>
