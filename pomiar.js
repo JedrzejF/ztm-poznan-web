@@ -35,12 +35,13 @@
     return "<button type='button' class='szac" + (szac ? " zrobione" : "") + "' data-szac>" +
       (szac ? "≈ oszacowane ✓" : "≈ nie dałem rady policzyć dokładnie") + "</button>";
   }
-  function korektaHtml(etykieta, t) {
+  // dodatek - np. przelaczenie na inny moment (tryb jazdy)
+  function korektaHtml(etykieta, t, dodatek) {
     return "<div class='korekta'><span>" + esc(etykieta) + " <b>" + hms(t) + "</b></span>" +
       [-5, -1, 1, 5].map(function (d) {
         return "<button type='button' data-przesun='" + d + "'>" + (d > 0 ? "+" : "−") + Math.abs(d) + " s</button>";
       }).join("") + "<button type='button' data-przesun='ok'>OK</button>" +
-      "<button type='button' data-przesun='usun' class='usun-moment'>\u2715 usu\u0144 ten moment</button></div>";
+      "<button type='button' data-przesun='usun' class='usun-moment'>\u2715 usu\u0144 ten moment</button>" + (dodatek || "") + "</div>";
   }
   function etZdarzenia(kod) { return P.ZDARZENIA.filter(function (z) { return z.kod === kod; })[0].etykieta; }
 
@@ -505,6 +506,14 @@
       return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
         esc(etZdarzenia(k)) + "<small>" + (cz[k] !== undefined ? hms(cz[k]).slice(0, 8) : "\u00a0") + "</small></button>";
     }
+    // w ramce korekty pozostale zapisane momenty - jedyna droga do "Stanal"
+    // po "Ruszyl" (wtedy jego dotkniecie zaczyna nastepny przystanek)
+    function inneMomenty(k) {
+      var inne = P.inneMomentyJazdy(cz, k);
+      return inne.length ? "<div class='inne-momenty'><span>popraw inny moment:</span>" + inne.map(function (x) {
+        return "<button type='button' data-inny-zj='" + x + "'>" + esc(etZdarzenia(x)) + "<small>" + hms(cz[x]).slice(0, 8) + "</small></button>";
+      }).join("") + "</div>" : "";
+    }
     el.innerHTML =
       "<article class='karta'>" +
       "<div class='pola'>" +
@@ -539,7 +548,7 @@
       // drugie zatrzymanie kilka metrow za peronem (29.09 - jak na przystanku);
       // pod "Ruszyl" teraz "Ruszyl ponownie" - pomylka odrzucona z komunikatem
       "<div class='zegar-jazdy2'>" + P.ZDARZENIA_JAZDY.slice(4).map(przyciskZJ).join("") + "</div>" + ponowneHtml(b) +
-      (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ]) : "") + "</div>" +
+      (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ], inneMomenty(edJ)) : "") + "</div>" +
       // LICZENIE
       "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
       licznikHtml("wsiadlo", "Wsiada", b.wsiadlo) + licznikHtml("wysiadlo", "Wysiada", b.wysiadlo) + szacHtml(b.szac) +
@@ -715,6 +724,9 @@
         }
         zmienPrzejazd(function (x) { return P.przesunJazdy(x, stan.edycjaJ, Number(bt.dataset.przesun) * 1000); });
       });
+    });
+    el.querySelectorAll("[data-inny-zj]").forEach(function (bt) {
+      bt.addEventListener("click", function () { stan.edycjaJ = bt.dataset.innyZj; rysujJazde(); });
     });
     el.querySelector("[data-szac]").addEventListener("click", function () {
       zmienPrzejazd(function (x) {

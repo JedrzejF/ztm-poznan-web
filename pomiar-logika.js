@@ -540,6 +540,13 @@
     return Object.assign({}, x, { biezacy: zdarzenie(x.biezacy, kod, t) });
   }
 
+  /* Inne zapisane momenty biezacego przystanku - przelaczenie w ramce korekty
+     (02.10, 832/8313 lp18: po "Ruszyl" dotkniecie "Stanal" to nastepny
+     przystanek, wiec "Stanal" nie dalo sie poprawic). */
+  function inneMomentyJazdy(czasy, kod) {
+    return ZDARZENIA_JAZDY.filter(function (k) { return k !== kod && (czasy || {})[k] !== undefined; });
+  }
+
   function cofnijZdarzenieJazdy(prz) {
     return Object.assign({}, prz, { biezacy: cofnij(Object.assign({ czasy: {} }, prz.biezacy)) });
   }
@@ -763,7 +770,7 @@
            tenSamPrzystanek: tenSamPrzystanek, slupkiNazwy: slupkiNazwy, nazwyZWynikow: nazwyZWynikow,
            etykietaKierunku: etykietaKierunku, szacujObciazenie: szacujObciazenie,
            zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,
-           zdarzenieJazdy: zdarzenieJazdy, cofnijZdarzenieJazdy: cofnijZdarzenieJazdy,
+           zdarzenieJazdy: zdarzenieJazdy, cofnijZdarzenieJazdy: cofnijZdarzenieJazdy, inneMomentyJazdy: inneMomentyJazdy,
            ZNACZNIKI: ZNACZNIKI, przelaczZnacznik: przelaczZnacznik, trwanieZnacznika: trwanieZnacznika,
            przesun: przesun, opisKorekt: opisKorekt,
            brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,

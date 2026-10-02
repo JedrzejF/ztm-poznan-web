@@ -237,7 +237,10 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    już ruszył, sam robi „Dalej” — zdarzenie trafia do właściwego przystanku,
    nawet jeśli nie zdążysz nacisnąć „Dalej”. ↶ cofa ostatnie. **Dotknięcie
    zapisanego** otwiera korektę −5 / −1 / +1 / +5 s (kolumna `korekty`, np.
-   `rusz-2`) — zamiast notatki „ruszył 2 s wcześniej”.
+   `rusz-2`) — zamiast notatki „ruszył 2 s wcześniej”. W ramce korekty
+   **popraw inny moment** przełącza na pozostałe zapisane momenty tego
+   przystanku — tak poprawisz „Stanął” po „Ruszył” (dotknij „Ruszył”, potem
+   „Stanął” w ramce).
 3. **Liczone** (obok „W pojeździe po odjeździe”): moje drzwi / mój człon
    (wagon) / cały pojazd (domyślnie) — raz na przejazd, zawsze to samo.
    Gdy nie cały pojazd, obok **moja część (od kabiny)**: przód / środek / tył
@@ -293,50 +296,15 @@ wcześniej — wtedy po prostu **Zakończ**.
 Na boku i z przodu pojazdu: **3 cyfry tramwaj, 4 cyfry autobus**. To klucz do
 dopasowania z GPS — obserwacja bez numeru jest bezużyteczna. Linię też wpisz.
 
-## Plan próby
+## Gdzie i kiedy mierzyć
 
-**Cel: co najmniej 35 kompletnych obserwacji w każdej z 4 grup**
-(tramwaj / autobus × bez świateł / światło tuż za przystankiem), razem ok. 150.
+Plan dnia — godziny, miejsca i kto gdzie stoi lub jedzie — jest w notatniku
+pod przyciskiem **Plan dnia**.
 
-Dlaczego 35: różnica „GPS − teren” dla jednego pojazdu ma rozrzut ~5 s, więc
-35 obserwacji daje błąd średniej ~0,8 s.
-Zapas ponad 30 na ~15% obserwacji, których nie da się dopasować.
-
-Miejsca wybrane tak, że **oba kierunki jednej pary przystanków** trafiają do
-różnych grup — te same warunki ruchu, różnica tylko w świetle:
-
-| sesja | miejsce | słupki | kiedy | pojazdów/h na kierunek |
-|---|---|---|---|---|
-| 1 | **Fredry** (tramwaje) | 117 → Gwarna (bez świateł), 118 → Most Teatralny (światło 25 m za) | dzień roboczy 10:00–12:00 | ~24 |
-| 2 | Fredry | j.w. | dzień roboczy 15:00–17:00 | ~36 |
-| 3 | **Swoboda** (autobusy) | 628 → Bułgarska/Polska (światło **39 m** za), 629 → Szpitalna (światło 31 m za) — **oba ze światłem** (niżej) | 10:00–12:00 | ~20 |
-| 4 | Swoboda | j.w. | 15:00–17:00 | ~21 |
-
-- Dni robocze, najlepiej wt–czw. Nie w dniu zmiany rozkładu.
-- Oba kierunki na zmianę — ile się da, bez utraty jakości.
-- Szczyt i poza szczytem, bo w szczycie inaczej działają światła i kolejki.
-
-**Zapasowe miejsca** (gdyby któreś się nie nadawało): tramwaje — Poznańska
-8 / 7 (światło 5 m za), Kórnicka 158 / 159 (11 m); autobusy — Małe Garbary
-1131 / Grochowe Łąki 1130 (19 m).
-
-**Sprawdź na miejscu** (wpisz w uwagach pierwszej obserwacji): czy na słupku
-„bez świateł” rzeczywiście nie ma sygnalizacji tuż za peronem, a na słupku
-„światło za” jest. Klasyfikacja pochodzi z mapy OSM (stan z maja 2026)
-i automatycznej reguły (35 m) — Twoje oko jest dokładniejsze.
-
-**Swoboda nie jest parą światło / brak**, tylko 31 m / 39 m: za 628 też jest
-sygnalizacja, 39 m za słupkiem (potwierdzone w OSM — automatyczna reguła 35 m
-jej nie objęła). Porównanie z przystankiem
-bez świateł daje za to **Małe Garbary 1131** (brak sygnalizacji do 80 m)
-wobec **Grochowe Łąki 1130** (19 m) — autobusy, ~21 pojazdów/h. Na Swobodzie
-koszt światła mierzy wprost znacznik **„czeka po wymianie” z powodem
-„światło”** — bez grupy kontrolnej. Pozostałe pary sprawdzone w OSM:
-Fredry 117 brak do 80 m / 118 25 m; Poznańska 8 brak / 7 5 m; Kórnicka
-158 brak za peronem / 159 11 m.
-
-**Objazdy:** plan liczony na rozkładzie objazdowym obowiązującym do 04.10.2026.
-Po tej dacie częstotliwości mogą się zmienić — sprawdzić przed sesją.
+**Sprawdź na miejscu** i wpisz w uwagach pierwszej obserwacji na danym
+słupku: czy tuż za peronem jest sygnalizacja („światło za”), czy nie („brak”).
+Mapa, z której wybieramy miejsca, bywa nieaktualna — Twoje oko jest
+dokładniejsze.
 
 ## Po sesji
 
@@ -345,7 +313,8 @@ Po tej dacie częstotliwości mogą się zmienić — sprawdzić przed sesją.
 2. Plik do repozytorium: `data/static/teren/` (wersjonowany — tych danych nie
    da się powtórzyć).
 3. Dopasowanie do GPS i wynik: skrypt zestawi obserwacje ze zdarzeniami GPS
-   po numerze taborowym i czasie, policzy różnicę postoju osobno dla 4 grup.
+   po numerze taborowym i czasie, policzy różnicę postoju osobno dla
+   tramwajów i autobusów, ze światłem za peronem i bez.
    Od wyniku zależy poprawka estymatora postoju, punktualność odjazdu i `L_a`.
 
 ## Co zapisuje notatnik
