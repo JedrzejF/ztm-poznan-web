@@ -6,7 +6,7 @@
 <title>Korki i opóźnienia</title>
 <meta name="description" content="Które odcinki komunikacji miejskiej w Poznaniu wydłużają się o danej porze dnia — pomiar z GTFS-RT.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="styl.css?v=0e48dbc602">
+<link rel="stylesheet" href="styl.css?v=973669867d">
 </head>
 <body>
 <header>
@@ -58,6 +58,29 @@
   </table>
 </section>
 
+<section class="tabela" id="kalibracja">
+  <h2>Kalibracja rozkładu — pary przystanków</h2>
+  <p class="drobny">Mediana różnicy między zmierzonym a rozkładowym czasem przejazdu pary przystanków, osobno dla tramwajów i autobusów, ze wszystkich godzin dni roboczych. <b>Za krótki</b>: pojazdy zwykle nie mieszczą się w czasie z rozkładu. <b>Za długi</b>: rozkład daje więcej czasu, niż pojazdy potrzebują. Percentyl: w ilu procentach przejazdów pojazd zmieścił się w czasie z rozkładu. Istotne: odchylenie potwierdzone testem znaków z korektą Benjaminiego-Hochberga. Odcinki przy postoju wyrównawczym zapisanym w rozkładzie są pominięte. Czas odcinka obejmuje jednak postój na przystanku początkowym, więc odcinek od pętli, na której pojazdy czekają na odjazd bez zapisu w rozkładzie, może wypaść „za krótki” z powodu czekania, nie jazdy. Filtr pojazdów u góry strony działa też tutaj; kliknięcie wiersza pokazuje odcinek na mapie.</p>
+  <div class="filtry">
+    <label>Rozkład <select id="k-kierunek"><option value="krotki">za krótki</option><option value="dlugi">za długi</option></select></label>
+    <label>Pary <select id="k-istotne"><option value="1">tylko z istotnym odchyleniem</option><option value="0">wszystkie</option></select></label>
+  </div>
+  <table>
+    <thead><tr><th>Odcinek</th><th>Pojazd</th><th class="l">Rozkład</th><th class="l">Pomiar</th><th class="l">Różnica ± błąd</th><th class="l">Percentyl</th><th class="l">Przejazdów</th></tr></thead>
+    <tbody id="k-tab"></tbody>
+  </table>
+</section>
+
+<section class="tabela" id="schody">
+  <h2>Schody kwantyzacji</h2>
+  <p class="drobny">Rozkład podaje odjazdy w pełnych minutach, więc czas rozkładowy krótkiego odcinka to 0, 60 albo 120 s — funkcja schodkowa. Zmierzony czas rośnie z odległością gładko. Mediany par przystanków w przedziałach odległości po trasie (pary z co najmniej <span id="s-min-n">5</span> przejazdami), wszystkie pojazdy.</p>
+  <svg id="schody-wykres" viewBox="0 0 520 260" role="img" aria-label="Mediana czasu rozkładowego i zmierzonego w funkcji odległości przystanków"></svg>
+  <table>
+    <thead><tr><th>Odległość po trasie</th><th class="l">Par</th><th class="l">Pomiar</th><th class="l">Rozkład</th><th class="l">Różnica</th></tr></thead>
+    <tbody id="schody-tab"></tbody>
+  </table>
+</section>
+
 <section class="tabela" id="punktualnosc">
   <h2>Punktualność przyjazdów</h2>
   <p class="drobny">Przyjazd punktualny: od <span id="p-przed">1 min</span> przed do <span id="p-po">3 min</span> po czasie z rozkładu. Wszystkie godziny dni roboczych. Po wybraniu linii — przystanki w kolejności trasy, osobno dla każdego kierunku.</p>
@@ -88,7 +111,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-polylineoffset@1.1.1/leaflet.polylineoffset.js"></script>
-<script src="logika.js?v=e49e6ba063"></script>
-<script src="mapa.js?v=abb1de2859"></script>
+<script src="logika.js?v=77c07ce453"></script>
+<script src="mapa.js?v=79740b559d"></script>
 </body>
 </html>

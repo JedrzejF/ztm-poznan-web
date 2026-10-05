@@ -89,3 +89,7 @@ footer { margin-top: 20px; border-top: 1px solid var(--linia); padding-top: 12px
 .slupek { display: flex; height: 10px; width: 160px; border-radius: 3px; overflow: hidden; gap: 2px; }
 .slupek i { display: block; height: 100%; }
 tr.suma td { font-weight: 600; }
+#schody-wykres { width: 100%; max-width: 640px; height: auto; display: block; margin: 4px 0 12px; }
+#schody-wykres text { fill: var(--tekst-2); font-size: 10px; }
+#schody-tab tr { cursor: default; }
+#schody-tab tr:hover { background: none; }

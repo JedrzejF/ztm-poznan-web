@@ -58,7 +58,75 @@
     document.getElementById("tab-godz").textContent = L_.fmtGodz(stan.godz);
     legenda();
     tabela();
+    tabelaKal();
     if (stan.wybrany) profil(stan.wybrany.odc);
+  }
+
+  /* --- kalibracja: ranking par i schody (liczby z kalibracja.py) -------- */
+  function pokazNaMapie(w) {
+    wybierz(w);
+    mapa.fitBounds(w.linia.getBounds(), { maxZoom: 16, padding: [60, 60] });
+    document.getElementById("mapa").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function tabelaKal() {
+    var k = dane.kalibracja, tb = document.getElementById("k-tab"), m = motyw();
+    if (!k) { document.getElementById("kalibracja").hidden = true; return; }
+    var lista = L_.rankingPar(k.pary, document.getElementById("k-kierunek").value, stan.typ,
+                              document.getElementById("k-istotne").value === "1", 15);
+    tb.innerHTML = "";
+    lista.forEach(function (p) {
+      var tr = document.createElement("tr");
+      var w = warstwy.find(function (x) { return x.odc.a === p.a && x.odc.b === p.b && x.odc.t === p.t; });
+      tr.innerHTML = "<td><span class='kropka' style='background:" + L_.kolor(p.d, "roznica", m) +
+        "'></span>" + L_.nazwa(p, dane.przystanki) + "</td><td>" + L_.TYPY[p.t] + "</td>" +
+        "<td class='l'>" + Math.round(p.s) + " s</td><td class='l'>" + Math.round(p.o) + " s</td>" +
+        "<td class='l'>" + L_.fmtRoznica(p.d) + " ± " + Math.round(p.se) + "</td>" +
+        "<td class='l'>" + Math.round(p.pct) + "%</td><td class='l'>" + p.n + "</td>";
+      if (w) tr.addEventListener("click", function () { pokazNaMapie(w); });
+      else tr.style.cursor = "default";
+      tb.appendChild(tr);
+    });
+    if (!lista.length) tb.innerHTML = "<tr><td colspan='7'>Brak par w tym wyborze.</td></tr>";
+  }
+
+  function schodyWykres() {
+    var k = dane.kalibracja;
+    if (!k || !k.schody.length) { document.getElementById("schody").hidden = true; return; }
+    var S = k.schody, sk = L_.skalaSchodow(S, 1600), svg = document.getElementById("schody-wykres");
+    var W = 520, H = 260, lewo = 48, prawo = 12, gora = 12, dol = 32;
+    var px = function (v) { return lewo + Math.min(v, sk.xmax) / sk.xmax * (W - lewo - prawo); };
+    var py = function (v) { return H - dol - v / sk.ymax * (H - gora - dol); };
+    var s = "", v, rozk = "", pom = "", kropki = "";
+    for (v = 0; v <= sk.ymax; v += 60) {
+      s += "<line x1='" + lewo + "' x2='" + (W - prawo) + "' y1='" + py(v) + "' y2='" + py(v) +
+           "' stroke='currentColor' opacity='0.15'/><text x='" + (lewo - 6) + "' y='" + (py(v) + 3) +
+           "' text-anchor='end'>" + v + " s</text>";
+    }
+    [0, 400, 800, 1200].forEach(function (x) {
+      s += "<text x='" + px(x) + "' y='" + (H - dol + 14) + "' text-anchor='middle'>" + x + "</text>";
+    });
+    s += "<text x='" + px(sk.xmax) + "' y='" + (H - dol + 14) + "' text-anchor='end'>" + sk.xmax + "+ m</text>";
+    S.forEach(function (b, i) {
+      var sr = px((b.lo + Math.min(b.hi, sk.xmax)) / 2);
+      rozk += (i ? "L" : "M") + px(b.lo) + " " + py(b.s) + " L" + px(b.hi) + " " + py(b.s) + " ";
+      pom += (i ? "L" : "M") + sr + " " + py(b.o) + " ";
+      kropki += "<circle cx='" + sr + "' cy='" + py(b.o) + "' r='3' style='fill:var(--akcent)'><title>" +
+                b.lo + "–" + b.hi + " m: pomiar " + Math.round(b.o) + " s, rozkład " + Math.round(b.s) +
+                " s, " + b.par + " par</title></circle>";
+    });
+    s += "<path d='" + rozk + "' fill='none' stroke='currentColor' stroke-width='2' stroke-dasharray='5 3' opacity='0.7'/>" +
+         "<path d='" + pom + "' fill='none' style='stroke:var(--akcent)' stroke-width='2' stroke-linejoin='round'/>" + kropki +
+         "<text x='" + (lewo + 8) + "' y='" + (gora + 12) + "'>— — rozkład (schodki)</text>" +
+         "<text x='" + (lewo + 8) + "' y='" + (gora + 26) + "' style='fill:var(--akcent)'>—●— pomiar (mediana)</text>";
+    svg.style.color = getComputedStyle(document.body).color;
+    svg.innerHTML = s;
+    document.getElementById("s-min-n").textContent = k.min_n_schody;
+    document.getElementById("schody-tab").innerHTML = S.map(function (b) {
+      return "<tr><td>" + b.lo + "–" + b.hi + " m</td><td class='l'>" + b.par + "</td><td class='l'>" +
+             Math.round(b.o) + " s</td><td class='l'>" + Math.round(b.s) + " s</td><td class='l'>" +
+             L_.fmtRoznica(b.o - b.s) + "</td></tr>";
+    }).join("");
   }
 
   function tabela() {
@@ -276,6 +344,7 @@
       " · " + d.odcinki.length + " odcinków · wygenerowano " + d.meta.wygenerowano.replace("T", " ");
     document.getElementById("min-n").textContent = d.meta.min_n;
     odswiez();
+    schodyWykres();
   }
 
   document.getElementById("godz").addEventListener("input", function (e) {
@@ -286,6 +355,9 @@
   });
   document.querySelectorAll("input[name=tryb]").forEach(function (r) {
     r.addEventListener("change", function (e) { stan.tryb = e.target.value; odswiez(); });
+  });
+  ["k-kierunek", "k-istotne"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", function () { if (dane) tabelaKal(); });
   });
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
     ustawPodklad(); odswiez(); if (punkt) tabelaPunkt();

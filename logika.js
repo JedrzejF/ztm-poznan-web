@@ -94,6 +94,29 @@
       .slice(0, ile || 15);
   }
 
+  /* Ranking par wg mediany odchylenia od rozkladu (dane z kalibracja.py).
+     kierunek "krotki": rozklad daje za malo czasu - najwieksze dodatnie
+     odchylenie na gorze; "dlugi": za duzo - najbardziej ujemne na gorze.
+     Para z odchyleniem po drugiej stronie zera nie trafia do listy. */
+  function rankingPar(pary, kierunek, typ, tylkoIstotne, ile) {
+    var znak = kierunek === "dlugi" ? -1 : 1;
+    return pary
+      .filter(function (p) {
+        return pasujeTyp(p, typ) && (!tylkoIstotne || p.i) && znak * p.d > 0;
+      })
+      .sort(function (x, y) { return znak * (y.d - x.d) || x.a.localeCompare(y.a); })
+      .slice(0, ile || 15);
+  }
+
+  /* Skala wykresu schodow: os x do xmax metrow (dalsze przedzialy na krawedzi),
+     os y od zera do najwiekszej mediany z zapasem, siatka co 60 s. */
+  function skalaSchodow(schody, xmax) {
+    var ymax = Math.max.apply(null, [120].concat(schody.map(function (s) {
+      return Math.max(s.o, s.s);
+    }))) * 1.1;
+    return { xmax: xmax || 1600, ymax: Math.ceil(ymax / 60) * 60 };
+  }
+
   function liczba(x, miejsc) { return x.toFixed(miejsc).replace(".", ","); }
   function fmtIloraz(x) {
     return x >= 1 ? "×" + liczba(x, 2) : "÷" + liczba(1 / x, 2);
@@ -194,7 +217,8 @@
   return {
     TRYBY: TRYBY, NASYCENIE: NASYCENIE, MOTYWY: MOTYWY, TYPY: TYPY,
     pozycja: pozycja, kolor: kolor, komorka: komorka, wartosc: wartosc,
-    pasujeTyp: pasujeTyp, ranking: ranking, nazwa: nazwa, opis: opis,
+    pasujeTyp: pasujeTyp, ranking: ranking, rankingPar: rankingPar, skalaSchodow: skalaSchodow,
+    nazwa: nazwa, opis: opis,
     filtrPunkt: filtrPunkt, etykietyPeronow: etykietyPeronow, fmtIloraz: fmtIloraz, fmtRoznica: fmtRoznica,
     fmtOpozn: fmtOpozn, fmtProc: fmtProc, fmtGodz: fmtGodz, fmtWartosc: fmtWartosc
   };
