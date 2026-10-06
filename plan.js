@@ -1,33 +1,23 @@
 /* plan.js - plan dnia pomiarow terenowych: tabela z filtrem po osobie.
- * Sama (bez drugiej osoby) W. jezdzi tylko autobusami; tramwajem wolno 9/11
- * na odcinku Piatkowska - Most Teatralny (ruch do ogarniecia w pojedynke).
  * Uzywany przez notatnik (pomiar.html, przycisk "Plan dnia") i przez
- * plan-dnia.html. Godziny z rozkladu ZTM (wersja 29.09, wazna od 30.09). */
+ * plan-dnia.html. Godziny z rozkladu ZTM na sroda 07.10 (wersja z 06.10). */
 (function () {
   "use strict";
   var DANE = {
-    tytul: "Plan pomiarów — środa 30.09",
-    osoby: ["W.", "G."],
+    tytul: "Plan pomiarów — środa 07.10",
+    osoby: ["W."],
     // od, do, kto, gdzie, tryb, uwagi
     wiersze: [
-      ["13:15", "13:45", "W.+G.", "Fredry 117 → Gwarna (bez świateł)", "przystanek", "W.: zegar + przód · G.: tylko liczenie, środek i tył"],
-      ["13:45", "14:08", "W.+G.", "Fredry 118 → Most Teatralny (światło 25 m)", "przystanek", "jak wyżej; czeka po wymianie → światło"],
-      ["14:10", "14:19", "W.+G.", "Tramwaj 8: Fredry 118 → Żeromskiego 61", "jazda", "oboje zegar; zapas 14:20"],
-      ["14:19", "14:38", "W.+G.", "Żeromskiego 61 → Ogrody (bez świateł)", "przystanek", "razem; dwa pojazdy naraz: W. przedni, G. tylny"],
-      ["14:40", "15:05", "W.+G.", "Żeromskiego 60 (światło 3 m)", "przystanek", "jak wyżej; potem wróćcie na 61"],
-      ["15:13", "15:19", "W.+G.", "Autobus 193: Żeromskiego 61 → Swoboda", "jazda", "oboje zegar; W. wysiada na Swobodzie, G. jedzie dalej"],
-      ["15:19", "15:33", "W.", "Swoboda 628 → Bułgarska/Polska", "przystanek", "~20 autobusów/h"],
-      ["15:19", "15:40", "G.", "Autobus 193 dalej: Swoboda → Os. Kopernika 1061", "jazda", "10 przystanków"],
-      ["15:33", "15:59", "W.", "Autobus 177: Swoboda 628 → Junikowo", "jazda", "18 przystanków; zapas 16:03"],
-      ["15:40", "16:25", "G.", "Os. Kopernika 1061 / 1062", "przystanek", "~21 pojazdów/h na stronę"],
-      ["16:11", "16:33", "W.", "Autobus 177: Junikowo → Swoboda 629", "jazda", "18 przystanków; zapas 16:41 → 17:03"],
-      ["16:27", "17:12", "G.", "Autobus 164: Os. Kopernika 1061 → Literacka", "jazda", "przez Jeżyce i Golęcin"],
-      ["16:33", "17:13", "W.", "Swoboda 629 → Szpitalna", "przystanek", "~20 autobusów/h"],
-      ["17:12", "17:27", "G.", "Literacka", "przystanek", "164, 170, 226, 835, 837"],
-      ["17:13", "17:55", "W.", "Autobus 191: Swoboda 629 → Os. Sobieskiego", "jazda", "26 przystanków; wcześniejszy kurs 16:58"],
-      ["17:27", "17:54", "G.", "Autobus 835: Literacka → Kiekrz 17:44 → Rokietnica/Węzeł Przesiadkowy 17:54", "jazda", "szczególna uwaga na Admiralską i Podjazdową: gdy nie stanie → „minął słupek TERAZ”; Admiralską miniesz dwukrotnie. Wysiądź na pierwszym słupku Rokietnicy/Węzła (3793)"],
-      ["17:54", "18:07", "G.", "Rokietnica/Węzeł (3793)", "przystanek", "czekając na 835"],
-      ["18:07", "18:49", "G.", "Autobus 835: Rokietnica/Węzeł (3793) → Kiekrz → Strzeszyn → Literacka 18:35 → Ogrody 18:49", "jazda", "szczególna uwaga na Podjazdową i Admiralską: gdy nie stanie → „minął słupek TERAZ”; Admiralską miniesz dwukrotnie. Koniec na Ogrodach"]
+      ["13:41", "14:12", "W.", "Autobus 151: Os. Sobieskiego 381 → Naramowice 4008", "jazda", "wysiądź, gdy autobus mija Naramowice po raz drugi"],
+      ["14:14", "14:19", "W.", "Tramwaj 3 lub 10: Naramowice 4008 → Błażeja 4002", "jazda", "ok. 14:15, pierwszy, który podjedzie; zapamiętaj numer pojazdu"],
+      ["14:20", "14:24", "W.", "Tramwaj 3 lub 10: Błażeja 4001 → Naramowice 4007", "jazda", "od razu z powrotem, innym pojazdem niż poprzednio (np. 14:20 linia 10)"],
+      ["14:57", "15:21", "W.", "Autobus 146: Naramowice 4008 → Szarych Szeregów 342", "jazda", "kierunek Instytut Technologiczno-Przyrodniczy"],
+      ["15:26", "15:48", "W.", "Autobus 178: Szarych Szeregów 342 → Połabska 493", "jazda", "kierunek Rondo Śródka"],
+      ["15:55", "16:06", "W.", "Autobus 174: Połabska 494 → Os. Batorego 391", "jazda", "ok. 15:55; kursuje co 15 min, rozkładowo 15:47 i 16:02"],
+      ["16:08", "16:14", "W.", "Autobus 348: Os. Batorego 392 → UAM Wydział Geografii 418", "jazda", "ten sam autobus staje też na Batorego 394 o 16:10"],
+      ["16:18", "16:30", "W.", "Autobus 198: UAM Wydział Geografii 417 → Os. Sobieskiego", "jazda", "przystanek 417 jest po drugiej stronie, ok. 130 m dalej; koniec"],
+      ["15:40", "16:06", "W.", "ZAPAS (gdy nie zdążysz na 146): Autobus 183: Szarych Szeregów 342 → Połabska 493", "jazda", "kierunek Rondo Śródka"],
+      ["16:17", "16:31", "W.", "ZAPAS: Autobus 174: Połabska 494 → Os. Sobieskiego", "jazda", "ok. 16:15; koniec"]
     ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",
