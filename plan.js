@@ -12,12 +12,12 @@
       ["14:14", "14:19", "W.", "Tramwaj 3 lub 10: Naramowice 4008 → Błażeja 4002", "jazda", "ok. 14:15, pierwszy, który podjedzie; zapamiętaj numer pojazdu"],
       ["14:20", "14:24", "W.", "Tramwaj 3 lub 10: Błażeja 4001 → Naramowice 4007", "jazda", "od razu z powrotem, innym pojazdem niż poprzednio (np. 14:20 linia 10)"],
       ["14:57", "15:21", "W.", "Autobus 146: Naramowice 4008 → Szarych Szeregów 342", "jazda", "kierunek Instytut Technologiczno-Przyrodniczy"],
-      ["15:26", "15:48", "W.", "Autobus 178: Szarych Szeregów 342 → Połabska 493", "jazda", "kierunek Rondo Śródka"],
-      ["15:55", "16:06", "W.", "Autobus 174: Połabska 494 → Os. Batorego 391", "jazda", "ok. 15:55; kursuje co 15 min, rozkładowo 15:47 i 16:02"],
+      ["15:26", "15:48", "W.", "Autobus 178: Szarych Szeregów 342 → Połabska 493", "jazda", "kierunek Rondo Śródka; jeśli o 15:30 nie ma autobusu, jedź 183 o 15:40 (wiersz ZAPAS)"],
+      ["15:55", "16:06", "W.", "Autobus 174: Połabska 494 → Os. Batorego 391", "jazda", "ok. 15:55; kursuje co 15 min, rozkładowo 15:47 i 16:02. Jeśli o 15:55 nie ma go na przystanku: jedź 16:02 prosto na Os. Sobieskiego i koniec (wiersz ZAPAS)"],
       ["16:08", "16:14", "W.", "Autobus 348: Os. Batorego 392 → UAM Wydział Geografii 418", "jazda", "ten sam autobus staje też na Batorego 394 o 16:10"],
       ["16:18", "16:30", "W.", "Autobus 198: UAM Wydział Geografii 417 → Os. Sobieskiego", "jazda", "przystanek 417 jest po drugiej stronie, ok. 130 m dalej; koniec"],
       ["15:40", "16:06", "W.", "ZAPAS (gdy nie zdążysz na 146): Autobus 183: Szarych Szeregów 342 → Połabska 493", "jazda", "kierunek Rondo Śródka"],
-      ["16:17", "16:31", "W.", "ZAPAS: Autobus 174: Połabska 494 → Os. Sobieskiego", "jazda", "ok. 16:15; koniec"]
+      ["16:17", "16:31", "W.", "ZAPAS: Autobus 174: Połabska 494 → Os. Sobieskiego", "jazda", "16:17 po zapasie z 183, albo 16:02 gdy nie zdążyłaś na 174 o 15:55; koniec"]
     ],
     zasady: [
       "Zegar ważniejszy niż liczenie: „Stanął” i „Ruszył” w chwili zdarzenia.",
