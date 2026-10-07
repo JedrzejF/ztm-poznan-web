@@ -471,8 +471,10 @@
      slupka ("Uniwersytet Ekonomiczny -> Zamek") bywa inny niz trasa tej
      linii i myli. Dopisek tylko, gdy nazwa jest na trasie wiecej niz raz:
      slupki po kolei (Rondo Rataje) - "(1. slupek)", "(2. slupek)";
-     powrot w to samo miejsce (petla, Admiralska) - "-> nastepny przystanek
-     trasy". `nazwy` - nazwy kolejnych przystankow trasy. */
+     powrot w to samo miejsce (petla, Admiralska) - pierwszy przejazd sama
+     nazwa, kolejne "(2. raz)". 07.10: dawny dopisek "-> nastepny przystanek"
+     na liniach okreznych (151: tam i z powrotem tymi samymi ulicami) trafial
+     do prawie kazdej pozycji. `nazwy` - nazwy kolejnych przystankow trasy. */
   function etykietyTrasy(nazwy) {
     var ile = {};
     nazwy.forEach(function (n) { ile[n] = (ile[n] || 0) + 1; });
@@ -481,10 +483,12 @@
       var a = i, b = i;                                  // ciag tej samej nazwy wokol i
       while (a > 0 && nazwy[a - 1] === n) a--;
       while (b + 1 < nazwy.length && nazwy[b + 1] === n) b++;
-      var e = n;
-      if (b - a + 1 < ile[n]) e += " \u2192 " + (b + 1 < nazwy.length ? nazwy[b + 1] : "koniec trasy");
-      if (b > a) e += " (" + (i - a + 1) + ". s\u0142upek)";
-      return e;
+      var raz = 1;                                       // ciagi tej nazwy przed tym
+      for (var j = 0; j < a; j++) if (nazwy[j] === n && (j === 0 || nazwy[j - 1] !== n)) raz++;
+      var d = [];
+      if (raz > 1) d.push(raz + ". raz");
+      if (b > a) d.push((i - a + 1) + ". s\u0142upek");
+      return d.length ? n + " (" + d.join(", ") + ")" : n;
     });
   }
 
