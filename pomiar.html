@@ -197,6 +197,11 @@
   .zegar-jazdy2 button small { display: block; font: 500 10px/1.2 ui-monospace, Menlo, monospace; color: var(--tekst-2); }
   .zegar-jazdy2 button.zrobione { background: #2f6fd6; border-color: #2f6fd6; color: #fff; }
   .zegar-jazdy2 button.zrobione small { color: #fff; }
+  /* 10.10: korekta "Stanal" po "Ruszyl" - przycisk "Stanal" zaczyna wtedy nastepny przystanek */
+  .popraw-stop { margin-top: 4px; }
+  .popraw-stop button { width: 100%; min-height: 40px; font: 600 13px/1.15 system-ui, sans-serif; border-radius: 8px; padding: 4px 6px;
+                        border: 1px dashed var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
+  .popraw-stop button small { margin-left: 6px; font: 500 12px ui-monospace, Menlo, monospace; color: var(--tekst-2); }
   .ponowne { min-height: 40px; font: 600 12px/1.15 system-ui, sans-serif; border-radius: 8px; padding: 4px 6px;
              border: 1px dashed var(--linia); background: var(--tlo); color: var(--tekst); touch-action: manipulation; }
   /* 02.10: wlasny wiersz (nie pod "Ruszyl"), obok cofniecie */
@@ -255,7 +260,7 @@
 </div>
 
 <script src="plan.js?v=c5710c0d6f"></script>
-<script src="pomiar-logika.js?v=b99f7daa1b"></script>
-<script src="pomiar.js?v=a7a00fa674"></script>
+<script src="pomiar-logika.js?v=a0eabd4d51"></script>
+<script src="pomiar.js?v=8a04b97989"></script>
 </body>
 </html>

@@ -480,12 +480,13 @@
         "Na ka\u017cdym przystanku licz wsiadaj\u0105cych i wysiadaj\u0105cych, a gdy sko\u0144czysz (tak\u017ce ju\u017c w trakcie jazdy) \u2014 <b>Dalej</b>.</p>" +
         "<div class='lista' style='margin:0'>" + zrobione + "</div>";
       el.querySelector("#nowy-przejazd").addEventListener("click", function () {
-        stan.przejazd = P.nowyPrzejazd(Date.now(), osoba()); zapisz(); rysujJazde();
+        stan.przejazd = P.nowyPrzejazd(Date.now(), osoba()); stan.trasaJakOtwarte = false; zapisz(); rysujJazde();
         var l = document.querySelector("#jazda [data-pole=linia]"); if (l) l.focus();
       });
       return;
     }
-    var kier = trasy[j.linia] || {};
+    var lTrasy = P.liniaTrasy(j);                      // inna niz linia przy zjezdzie do zajezdni (10.10)
+    var kier = trasy[lTrasy] || {};
     var b = j.biezacy;
     // szacunek dla biezacego przystanku: ostatnia znana liczba + bilans licznikow
     var sz = P.szacujObciazenie(j.postoje.concat([Object.assign({}, b, { obciazenie: "" })]), j.zakres);
@@ -500,7 +501,7 @@
     var wid = P.widoczne(j.rola);
     // na zadanie (30.09): "Nie stanal" na gorze karty, dopoki nie zapisano
     // "Stanal"; na zwyklym przystanku tych przyciskow nie ma
-    var nz = P.naZadanie(poId[b.przystanek], j.linia);
+    var nz = P.naZadanie(poId[b.przystanek], lTrasy);
     var edJ = stan.edycjaJ && cz[stan.edycjaJ] !== undefined ? stan.edycjaJ : null;
     function przyciskZJ(k) {
       return "<button type='button' data-zj='" + k + "' class='" + (cz[k] !== undefined ? "zrobione" : "") + (edJ === k ? " edytowane" : "") + "'>" +
@@ -520,9 +521,16 @@
       "<label>Linia<input data-pole='linia' value='" + esc(j.linia) + "' autocomplete='off' autocapitalize='characters'></label>" +
       "<label>Nr taborowy<input data-pole='pojazd' value='" + esc(j.pojazd) + "' inputmode='numeric' pattern='[0-9]*' autocomplete='off'></label>" +
       "</div>" +
+      // jedzie trasa innej linii (zjazd do zajezdni, objazd): linia zostaje
+      // prawdziwa, lista przystankow z trasy wpisanej tutaj (10.10)
+      "<details class='trasa-jak'" + (j.trasa_jak || stan.trasaJakOtwarte ? " open" : "") + "><summary>" +
+        (j.trasa_jak ? "Przystanki jak linia " + esc(j.trasa_jak) : "Jedzie tras\u0105 innej linii? (np. do zajezdni)") + "</summary>" +
+        "<label>Przystanki jak linia<input type='text' data-pole='trasa_jak' value='" + esc(j.trasa_jak || "") +
+        "' autocomplete='off' autocapitalize='characters' placeholder='np. 3'></label>" +
+        "<p class='drobny'>W polu \u201eLinia\u201d zostaw numer z pojazdu. Puste = zwyk\u0142a trasa.</p></details>" +
       (Object.keys(kier).length ? "<div class='tlok kierunki'>" + Object.keys(kier).map(function (k) {
         return "<button type='button' data-kier='" + esc(k) + "' class='" + (j.kierunek === k ? "zrobione" : "") + "'>\u2192 " + esc(kier[k].cel) + "</button>";
-      }).join("") + "</div>" : (j.linia ? "<p class='drobny'>Brak trasy tej linii w danych \u2014 przystanek wybierzesz wyszukiwark\u0105.</p>" : "")) +
+      }).join("") + "</div>" : (lTrasy ? "<p class='drobny'>Brak trasy tej linii w danych \u2014 przystanek wybierzesz wyszukiwark\u0105.</p>" : "")) +
       "<div class='biezacy'><span class='drobny'>Przystanek</span>" +
       (trasa.length ? "<div class='biezacy-wiersz'><button type='button' data-akcja='wstecz' title='poprzedni przystanek'" +
         (P.poprzedni(trasa, b.przystanek) ? "" : " disabled") + ">\u25c0</button><select data-przyst>" +
@@ -548,6 +556,9 @@
       // drugie zatrzymanie kilka metrow za peronem (29.09 - jak na przystanku);
       // pod "Ruszyl" teraz "Ruszyl ponownie" - pomylka odrzucona z komunikatem
       "<div class='zegar-jazdy2'>" + P.ZDARZENIA_JAZDY.slice(4).map(przyciskZJ).join("") + "</div>" + ponowneHtml(b) +
+      // po "Ruszyl" przycisk "Stanal" zaczyna nastepny przystanek - korekta osobno (10.10)
+      (P.stanalDoPoprawki(cz) && edJ !== "stop" ? "<div class='popraw-stop'><button type='button' data-inny-zj='stop'>popraw \u201eStan\u0105\u0142\u201d" +
+        "<small>" + hms(cz.stop).slice(0, 8) + "</small></button></div>" : "") +
       (edJ ? korektaHtml(etZdarzenia(edJ), cz[edJ], inneMomenty(edJ)) : "") + "</div>" +
       // LICZENIE
       "<div class='sekcja sek-liczenie'" + (wid.liczenie ? "" : " hidden") + "><div class='pasazerowie'>" +
@@ -617,6 +628,21 @@
       });
     });
     // linia zmienia liste kierunkow - przerysuj po zejsciu z pola, nie w trakcie pisania
+    var poZmianieTrasy = function () {
+      var jj = stan.przejazd, kk = Object.keys(trasy[P.liniaTrasy(jj)] || {});
+      if (kk.indexOf(jj.kierunek) < 0) { jj.kierunek = ""; jj.cel = ""; jj.trasa = []; }
+      zapisz();
+      setTimeout(function () {                 // po przeniesieniu fokusu: nie gub pola, w ktore przeszedl
+        var a = document.activeElement, pole = a && a.dataset ? a.dataset.pole : null;
+        rysujJazde();
+        if (pole) { var n = document.querySelector("#jazda [data-pole=" + pole + "]"); if (n) n.focus(); }
+      }, 0);
+    };
+    // rozwiniecie przetrwa przerysowanie po zejsciu z pola linii
+    el.querySelector("details.trasa-jak").addEventListener("toggle", function (ev) { stan.trasaJakOtwarte = ev.target.open; });
+    el.querySelector("[data-pole=trasa_jak]").addEventListener("change", function (ev) {
+      stan.przejazd.trasa_jak = ev.target.value.trim().toUpperCase(); poZmianieTrasy();
+    });
     el.querySelector("[data-pole=linia]").addEventListener("change", function (ev) {
       var nowa = ev.target.value.trim(), st = stan.przejazd;
       if (st.postoje.length && nowa && nowa !== st.linia) {
@@ -627,14 +653,7 @@
           stan.przejazdy.push(para[0]); stan.przejazd = para[1];
         } else st.linia = nowa;
       }
-      var jj = stan.przejazd, kk = Object.keys(trasy[jj.linia] || {});
-      if (kk.indexOf(jj.kierunek) < 0) { jj.kierunek = ""; jj.cel = ""; jj.trasa = []; }
-      zapisz();
-      setTimeout(function () {                 // po przeniesieniu fokusu: nie gub pola, w ktore przeszedl
-        var a = document.activeElement, pole = a && a.dataset ? a.dataset.pole : null;
-        rysujJazde();
-        if (pole) { var n = document.querySelector("#jazda [data-pole=" + pole + "]"); if (n) n.focus(); }
-      }, 0);
+      poZmianieTrasy();
     });
     el.querySelectorAll("[data-kier]").forEach(function (bt) {
       bt.addEventListener("click", function () {

@@ -227,6 +227,13 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
 
 1. **Zacznij przejazd** → linia, numer taborowy (w środku: naklejka nad
    drzwiami albo przy kabinie), kierunek (przyciski „→ cel” z rozkładu).
+   **Jedzie trasą innej linii** (np. po kursie zjeżdża do zajezdni albo
+   jedzie objazdem po trasie innej linii): w polu **Linia** zostaw numer
+   z pojazdu, a pod spodem rozwiń **Jedzie trasą innej linii?** i wpisz
+   linię, której przystanki się zgadzają (np. tramwaj 15 do zajezdni
+   Franowo jedzie przystankami linii 3 → wpisz 3). Lista przystanków
+   i kierunki będą jak dla tej linii. Notatka w każdym wierszu nie jest
+   potrzebna. Gdy pojazd wraca na swoją trasę — wyczyść to pole.
 2. **Przystanek** — z listy trasy wybierz ten, na którym jesteś. Dalej
    notatnik sam przechodzi na kolejny. (Wyszukiwarka tylko, gdy linii nie ma
    w danych — objazd poza trasą jest zbyt rzadki.)
@@ -239,8 +246,10 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    zapisanego** otwiera korektę −5 / −1 / +1 / +5 s (kolumna `korekty`, np.
    `rusz-2`) — zamiast notatki „ruszył 2 s wcześniej”. W ramce korekty
    **popraw inny moment** przełącza na pozostałe zapisane momenty tego
-   przystanku — tak poprawisz „Stanął” po „Ruszył” (dotknij „Ruszył”, potem
-   „Stanął” w ramce).
+   przystanku. **„Stanął” po „Ruszył”**: dotknięcie „Stanął” zaczyna wtedy
+   następny przystanek, więc do poprawki jest osobny przycisk pod zegarem —
+   **popraw „Stanął”** (z zapisaną godziną). Działa, dopóki nie naciśniesz
+   „Dalej”, tak jak korekta pozostałych momentów.
 3. **Liczone** (obok „W pojeździe po odjeździe”): moje drzwi / mój człon
    (wagon) / cały pojazd (domyślnie) — raz na przejazd, zawsze to samo.
    Gdy nie cały pojazd, obok **moja część (od kabiny)**: przód / środek / tył
@@ -287,9 +296,12 @@ t_pierwsze, t_zapis, t_stop, t_otw, t_zamk, t_rusz, wsiadlo, wysiadlo, tlok, obc
 obciazenie_zakres, obciazenie_szac, z_czas_s, z_przed_s, z_za_s, uwaga_przyst,
 uwagi, korekty, szacunek, czesc, rola, obserwator` (czasy w ms od epoki, UTC;
 `obciazenie` wpisane, `obciazenie_szac` z bilansu; `z_*_s` — czas trwania
-znaczników w sekundach; nowe kolumny zawsze na końcu). Trasy w notatniku to wariant główny kierunku z aktualnego
-rozkładu (ten sam co w tabeli punktualności); kursy skrócone kończą się
-wcześniej — wtedy po prostu **Zakończ**.
+znaczników w sekundach; nowe kolumny zawsze na końcu; ostatnia,
+`trasa_jak_linia` — linia, której przystanki wybrano, gdy pojazd jechał
+trasą innej linii, puste przy zwykłej trasie). Trasy w notatniku to
+najczęstszy przebieg każdego kierunku według rozkładu dnia roboczego; linie,
+które jeżdżą tylko w weekend, są dodane z rozkładu soboty i niedzieli.
+Kursy skrócone kończą się wcześniej — wtedy po prostu **Zakończ**.
 
 ## Numer taborowy — obowiązkowo
 

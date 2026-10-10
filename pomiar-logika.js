@@ -237,7 +237,7 @@
   function nowyPrzejazd(teraz, opcje) {
     licznik += 1;
     return Object.assign({ id: "J" + teraz + "-" + licznik, linia: "", pojazd: "", kierunek: "", cel: "", trasa: [],
-             zakres: "caly", czesc: "", uwagi: "", postoje: [], utworzona: teraz,
+             zakres: "caly", czesc: "", uwagi: "", trasa_jak: "", postoje: [], utworzona: teraz,
              biezacy: _pusty("") }, _osoba(opcje));
   }
 
@@ -551,6 +551,21 @@
     return ZDARZENIA_JAZDY.filter(function (k) { return k !== kod && (czasy || {})[k] !== undefined; });
   }
 
+  /* "Stanal" po "Ruszyl" (10.10, 164/1312 lp5: "nie moge tego edytowac"):
+     dotkniecie przycisku zaczyna nastepny przystanek, wiec korekta ma osobny,
+     widoczny przycisk - droga przez ramke innego momentu byla nieznana. */
+  function stanalDoPoprawki(czasy) {
+    var c = czasy || {};
+    return c.stop !== undefined && c.rusz !== undefined;
+  }
+
+  /* Linia, ktorej trasa daje liste przystankow i kierunki (10.10, 15/520:
+     zjazd do zajezdni Franowo trasa linii 3). Linia przejazdu zostaje
+     prawdziwa - numer na pojezdzie; pusta trasa_jak = trasa tej linii. */
+  function liniaTrasy(prz) {
+    return String(prz.trasa_jak || "").trim() || prz.linia;
+  }
+
   function cofnijZdarzenieJazdy(prz) {
     return Object.assign({}, prz, { biezacy: cofnij(Object.assign({ czasy: {} }, prz.biezacy)) });
   }
@@ -733,7 +748,8 @@
     .concat(["z_czeka_s", "z_czeka_powod", "t_stop2", "t_rusz2", "ponowne_otw", "drugi_przy_peronie"])
     .concat(["nie_stanal", "t_minal"])
     .concat(["z_przed_od", "z_przed_do", "z_czeka_od", "z_czeka_do"])
-    .concat(["z_odblok_s", "z_odblok_od", "z_odblok_do"]);
+    .concat(["z_odblok_s", "z_odblok_od", "z_odblok_do"])
+    .concat(["trasa_jak_linia"]);
 
   /* CSV przejazdow: wiersz = postoj (format dlugi), czasy w ms od epoki. */
   function csvPrzejazdy(lista) {
@@ -755,6 +771,7 @@
           .concat(godzinyZnacznika((p.znaczniki || {}).czeka, p.t))
           .concat([_zs(p, "odblok", p.t)])
           .concat(godzinyZnacznika((p.znaczniki || {}).odblok, p.t))
+          .concat([j.trasa_jak || ""])
           .map(csvPole).join(","));
       });
     });
@@ -775,6 +792,7 @@
            etykietaKierunku: etykietaKierunku, szacujObciazenie: szacujObciazenie,
            zakresObciazenia: zakresObciazenia, ZDARZENIA_JAZDY: ZDARZENIA_JAZDY,
            zdarzenieJazdy: zdarzenieJazdy, cofnijZdarzenieJazdy: cofnijZdarzenieJazdy, inneMomentyJazdy: inneMomentyJazdy,
+           stanalDoPoprawki: stanalDoPoprawki, liniaTrasy: liniaTrasy,
            ZNACZNIKI: ZNACZNIKI, przelaczZnacznik: przelaczZnacznik, trwanieZnacznika: trwanieZnacznika,
            przesun: przesun, opisKorekt: opisKorekt,
            brakiPrzejazdu: brakiPrzejazdu, csvPrzejazdy: csvPrzejazdy,
