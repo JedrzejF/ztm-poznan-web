@@ -195,7 +195,11 @@ i „Ruszył”, nie licz (albo podzielcie się rolami, wyżej).
   je, jeśli liczysz tylko część.
 - **+** przy każdej osobie wsiadającej / wysiadającej przez te drzwi;
   **−** poprawia pomyłkę.
-- **Zapełnienie** jednym dotknięciem: luźno / siedzenia zajęte / stoją.
+- **Zapełnienie** jednym dotknięciem: luźno / siedzenia zajęte / stoją /
+  ścisk — **przy każdym pojeździe**. Oceniaj tłok **przy drzwiach, które
+  liczysz**, nie w całym pojeździe: często w środku jest luźno, a przy
+  drzwiach ludzie stoją jeden na drugim. „Ścisk” = przy drzwiach trudno się
+  ruszyć, ktoś musi wyjść, żeby inni mogli wejść albo wysiąść.
 
 Pliki `Wymiana_pasazerska_*.xlsx` to dane UTK o **stacjach
 kolejowych** w Polsce — nie dotyczą przystanków ZTM. Wymianę na przystankach
@@ -258,8 +262,14 @@ kontekst dla postoju i punktualności, nie osobna hipoteza. Przełącznik
    można ją zmienić na przystanku, np. raz policzyć cały pojazd. Szacunek
    ciągnie się tylko od liczby z tym samym zakresem co liczniki.
 4. Na każdym przystanku **+** przy każdej osobie wsiadającej i wysiadającej.
-   **Zapełnienie** (luźno / siedzenia / stoją / ścisk) jest zwinięte — tylko
-   gdy nie liczysz osób; przy liczbie osób nic nie dodaje.
+   **Zapełnienie** (luźno / siedzenia / stoją / ścisk) jest zwinięte —
+   rozwiń je i zaznacz **na każdym przystanku**, także gdy liczysz osoby
+   w pojeździe. Oceniaj tłok **przy drzwiach, które liczysz** (albo przy
+   których stoisz), nie w całym pojeździe: liczba osób w pojeździe tego nie
+   pokaże, bo ludzie tłoczą się zwykle przy drzwiach. „Ścisk” = przy drzwiach
+   trudno się ruszyć, ktoś musi wyjść, żeby inni mogli wejść albo wysiąść.
+   Osób, które tylko wychodzą na chwilę i wracają, nie licz jako wsiadających
+   ani wysiadających.
    **Znaczniki** — jak na przystanku (rozdział „Znaczniki” wyżej): czeka po
    wymianie (+ powód), kolejka przed peronem, drugi przy peronie. Czekanie
    przy peronie to „czeka” z powodem, drugie zatrzymanie kilka metrów dalej
